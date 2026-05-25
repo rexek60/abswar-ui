@@ -886,15 +886,95 @@ function addActivity(from, to) {
   if (list.children.length>12) list.removeChild(list.lastChild);
 }
 
-/* ── BUY AMMO ── */
+/* ── BUY AMMO (Smart Contract) ── */
+const CONTRACT_ADDRESS = '0x325b18816734210e9fEbAA0516030A8Ec74bE3d4';
+const ABSTRACT_CHAIN_ID = '0x2b74'; // 11124 hex
+
+// buyAmmo() fonksiyonunun keccak imzası (ilk 4 byte)
+const BUY_AMMO_SELECTOR = '0x499eb3de';
+
+// Paket -> ETH miktarı (ondalık string)
+const AMMO_PRICE_ETH = {
+  100:  '0.01',
+  500:  '0.08',
+  2000: '0.75',
+  9999: '5.0'
+};
+
+// ETH -> wei hex çevirici
+function ethToWeiHex(ethStr) {
+  const [whole, frac=''] = ethStr.split('.');
+  const fracPadded = (frac + '0'.repeat(18)).slice(0, 18);
+  const weiStr = (whole === '0' ? '' : whole) + fracPadded;
+  const weiBig = BigInt(weiStr.replace(/^0+/, '') || '0');
+  return '0x' + weiBig.toString(16);
+}
+
 async function buyAmmo(pack) {
   if (!wallet) { showToast('Önce wallet bağla!','error'); return; }
+  if (!window.ethereum) { showToast('MetaMask bulunamadı!','error'); return; }
+
+  const ethAmount = AMMO_PRICE_ETH[pack];
+  if (!ethAmount) { showToast('Geçersiz paket.','error'); return; }
+
   try {
-    const res = await fetch(API+'/api/market/buy-demo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({wallet,pack})});
-    const data = await res.json();
-    if (data.error) showToast(data.error,'error');
-    else showToast(`✅ ${pack.toLocaleString('tr-TR')} mermi satın alındı!`,'success');
-  } catch(e) { showToast('Satın alma başarısız.','error'); }
+    // 1. Doğru ağda mıyız kontrol et
+    const chainId = await ethereum.request({ method: 'eth_chainId' });
+    if (chainId !== ABSTRACT_CHAIN_ID) {
+      showToast('Abstract Testnet ağına geçiliyor...','info');
+      try {
+        await ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: ABSTRACT_CHAIN_ID }]
+        });
+      } catch (switchErr) {
+        if (switchErr.code === 4902) {
+          await ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: ABSTRACT_CHAIN_ID,
+              chainName: 'Abstract Sepolia Testnet',
+              nativeCurrency: { name:'ETH', symbol:'ETH', decimals:18 },
+              rpcUrls: ['https://api.testnet.abs.xyz'],
+              blockExplorerUrls: ['https://explorer.testnet.abs.xyz']
+            }]
+          });
+        } else {
+          showToast('Ağ değiştirilemedi.','error');
+          return;
+        }
+      }
+    }
+
+    // 2. Contract'a buyAmmo() çağrısı + ETH gönder
+    const valueHex = ethToWeiHex(ethAmount);
+    showToast(`💳 ${ethAmount} ETH ödeme onayı bekleniyor...`,'info');
+
+    const txHash = await ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [{
+        from:  wallet,
+        to:    CONTRACT_ADDRESS,
+        value: valueHex,
+        data:  BUY_AMMO_SELECTOR
+      }]
+    });
+
+    showToast(`✅ İşlem gönderildi! ${pack.toLocaleString('tr-TR')} mermi alınıyor...`,'success');
+
+    // 3. Backend'e de bildir (oyun içi kayıt)
+    fetch(API+'/api/market/buy-demo',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ wallet, pack, txHash })
+    }).catch(()=>{});
+
+    // 4. Sohbete sistem mesajı
+    addChatSystem(`💳 ${pack.toLocaleString('tr-TR')} mermi satın alındı (${ethAmount} ETH)`);
+
+  } catch(e) {
+    if (e.code === 4001) showToast('Ödeme iptal edildi.','error');
+    else showToast('İşlem başarısız: ' + (e.message||'').slice(0,40),'error');
+  }
 }
 
 /* ── CHAT ── */
