@@ -51,7 +51,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 
 /* MAP */
 #mapSvg{width:100%;height:100%;cursor:crosshair}
-.country-land{fill:#16683a;stroke:#3ac46e;stroke-width:0.8;transition:fill .2s;cursor:crosshair}
+.country-land{fill:#16683a;stroke:#3ac46e;stroke-width:0.8;stroke-linejoin:round;stroke-linecap:round;transition:fill .2s;cursor:crosshair}
 .country-land:hover{fill:#1f9050;stroke:#00ff88;stroke-width:1.2}
 .country-land.my-country{fill:#1a8a3a;stroke:#00ff88;stroke-width:1.5}
 .country-land.targeted{fill:#a01525;stroke:#ff3050;stroke-width:1.5}
@@ -59,8 +59,8 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .city-dot{fill:#e8162a;cursor:crosshair}
 .city-dot.my-city{fill:#00c853}
 .city-dot.target-city{fill:#ff4500}
-.city-label{font-family:'Share Tech Mono',monospace;font-size:7px;fill:#b8ccd8;pointer-events:none}
-.hp-label{font-family:'Share Tech Mono',monospace;font-size:6.5px;fill:rgba(184,204,216,0.6);pointer-events:none}
+.city-label{font-family:'Share Tech Mono',monospace;font-size:7px;fill:#e8f4ff;pointer-events:none;paint-order:stroke;stroke:#03080e;stroke-width:1.6px;stroke-linejoin:round}
+.hp-label{font-family:'Share Tech Mono',monospace;font-size:6.5px;fill:rgba(184,204,216,0.6);pointer-events:none;paint-order:stroke;stroke:#03080e;stroke-width:1.4px;stroke-linejoin:round}
 
 /* RIGHT PANELS */
 .co-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
@@ -466,7 +466,12 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 
 <!-- Alliance Chat -->
 <div class="cell" style="grid-column:2;grid-row:2">
-  <div class="sh">İTTİFAK SOHBETİ <span style="font-family:var(--mono);font-size:8px;color:var(--green)">🇹🇷 TÜRK İTTİFAKI &nbsp; 256 Çevrimiçi</span></div>
+  <div class="sh">İTTİFAK SOHBETİ <span style="font-family:var(--mono);font-size:8px;color:var(--green)" id="allianceTag">🇹🇷 İTTİFAK YOK</span></div>
+  <div style="display:flex;gap:4px;padding:5px 8px;border-bottom:1px solid var(--border);flex-shrink:0">
+    <button class="btn-sm btn-red" style="flex:1" onclick="openAllianceModal('create')">+ İTTİFAK KUR</button>
+    <button class="btn-sm btn-out" style="flex:1" onclick="openAllianceModal('join')">İTTİFAKA KATIL</button>
+    <button class="btn-sm btn-out" style="flex:1" onclick="openRadioModal()">📻 TELSİZ</button>
+  </div>
   <div class="chat-body" id="chatBody">
     <div class="chat-msg"><div class="chat-who"><span style="font-size:11px">🇹🇷</span><span class="chat-name">KomutanTR</span><span class="chat-t">2dk</span></div><div class="chat-txt">Herkes Yunanistan'a odaklanın!</div></div>
     <div class="chat-msg"><div class="chat-who"><span style="font-size:11px">🇹🇷</span><span class="chat-name">General34</span><span class="chat-t">3dk</span></div><div class="chat-txt">Batı cephesinde daha fazla desteğe ihtiyaç var!</div></div>
@@ -575,6 +580,41 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
       <button class="c-btn" onclick="modalAction('AU')">🇦🇺 AU</button>
       <button class="c-btn" onclick="modalAction('ID')">🇮🇩 ID</button>
       <button class="c-btn" onclick="modalAction('MX')">🇲🇽 MX</button>
+    </div>
+  </div>
+</div>
+
+<!-- ALLIANCE MODAL -->
+<div class="modal" id="allianceModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeAllianceModal()">✕ KAPAT</button>
+    <div class="modal-title" id="allianceModalTitle">İTTİFAK KUR</div>
+    <div class="modal-sub" id="allianceModalSub">İttifakına bir isim ver. Diğer komutanlar katılabilir.</div>
+    <div id="createForm">
+      <input id="allianceName" class="chat-inp" placeholder="İttifak adı (örn: Türk İttifakı)"
+        style="width:100%;padding:9px 10px;border:1px solid var(--border);margin-bottom:10px;font-size:12px">
+      <button class="btn-sm btn-red" style="width:100%;padding:9px" onclick="createAlliance()">İTTİFAKI OLUŞTUR</button>
+    </div>
+    <div id="joinForm" style="display:none">
+      <input id="allianceId" class="chat-inp" placeholder="İttifak ID'si yapıştır"
+        style="width:100%;padding:9px 10px;border:1px solid var(--border);margin-bottom:10px;font-size:12px">
+      <button class="btn-sm btn-red" style="width:100%;padding:9px" onclick="joinAlliance()">İTTİFAKA KATIL</button>
+    </div>
+  </div>
+</div>
+
+<!-- RADIO MODAL -->
+<div class="modal" id="radioModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeRadioModal()">✕ KAPAT</button>
+    <div class="modal-title">📻 İTTİFAK TELSİZİ</div>
+    <div class="modal-sub">İttifakındaki tüm oyunculara komut yayınla.</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <button class="btn-sm btn-red" style="padding:10px" onclick="radioCommand('ATTACK_NOW')">⚔️ ŞİMDİ SALDIR</button>
+      <button class="btn-sm btn-out" style="padding:10px" onclick="radioCommand('DEFEND')">🛡️ SAVUN</button>
+      <button class="btn-sm btn-out" style="padding:10px" onclick="radioCommand('REGROUP')">🔄 YENİDEN TOPLAN</button>
+      <button class="btn-sm btn-out" style="padding:10px" onclick="radioCommand('RETREAT')">🏃 GERİ ÇEKİL</button>
+      <button class="btn-sm btn-out" style="padding:10px" onclick="radioCommand('FOCUS_FIRE')">🎯 ODAKLI ATEŞ</button>
     </div>
   </div>
 </div>
@@ -871,9 +911,86 @@ function sendChat() {
   if (wallet) fetch(API+'/api/alliance/radio',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({wallet,command:msg})}).catch(()=>{});
 }
 
+/* ── ALLIANCE ── */
+let myAlliance = null;
+
+function openAllianceModal(mode) {
+  if (!wallet) { showToast('Önce wallet bağla!','error'); return; }
+  document.getElementById('createForm').style.display = mode==='create' ? 'block' : 'none';
+  document.getElementById('joinForm').style.display   = mode==='join'   ? 'block' : 'none';
+  document.getElementById('allianceModalTitle').textContent = mode==='create' ? 'İTTİFAK KUR' : 'İTTİFAKA KATIL';
+  document.getElementById('allianceModalSub').textContent = mode==='create'
+    ? 'İttifakına bir isim ver. Diğer komutanlar katılabilir.'
+    : 'Katılmak istediğin ittifakın ID\'sini gir.';
+  document.getElementById('allianceModal').classList.add('show');
+}
+function closeAllianceModal() { document.getElementById('allianceModal').classList.remove('show'); }
+
+async function createAlliance() {
+  const name = document.getElementById('allianceName').value.trim();
+  if (!name) { showToast('İttifak adı gir!','error'); return; }
+  try {
+    const res = await fetch(API+'/api/alliance/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({wallet,name})});
+    const data = await res.json();
+    if (data.error) { showToast(data.error,'error'); return; }
+    myAlliance = data.allianceId || data.id || name;
+    document.getElementById('allianceTag').textContent = `🛡️ ${name.toUpperCase()}`;
+    document.getElementById('allianceTag').style.color = 'var(--green)';
+    showToast(`✅ İttifak kuruldu: ${name}`,'success');
+    closeAllianceModal();
+    addChatSystem(`İttifak "${name}" kuruldu! ID: ${myAlliance}`);
+  } catch(e) { showToast('İttifak kurulamadı.','error'); }
+}
+
+async function joinAlliance() {
+  const id = document.getElementById('allianceId').value.trim();
+  if (!id) { showToast('İttifak ID gir!','error'); return; }
+  try {
+    const res = await fetch(API+'/api/alliance/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({wallet,allianceId:id})});
+    const data = await res.json();
+    if (data.error) { showToast(data.error,'error'); return; }
+    myAlliance = id;
+    const name = data.name || data.allianceName || id;
+    document.getElementById('allianceTag').textContent = `🛡️ ${String(name).toUpperCase()}`;
+    document.getElementById('allianceTag').style.color = 'var(--green)';
+    showToast(`✅ İttifaka katıldın!`,'success');
+    closeAllianceModal();
+    addChatSystem(`İttifaka katıldın!`);
+  } catch(e) { showToast('İttifaka katılınamadı.','error'); }
+}
+
+/* ── RADIO ── */
+function openRadioModal() {
+  if (!wallet) { showToast('Önce wallet bağla!','error'); return; }
+  document.getElementById('radioModal').classList.add('show');
+}
+function closeRadioModal() { document.getElementById('radioModal').classList.remove('show'); }
+
+async function radioCommand(cmd) {
+  if (!wallet) { showToast('Önce wallet bağla!','error'); return; }
+  const labels = {ATTACK_NOW:'⚔️ ŞİMDİ SALDIR',DEFEND:'🛡️ SAVUN',REGROUP:'🔄 YENİDEN TOPLAN',RETREAT:'🏃 GERİ ÇEKİL',FOCUS_FIRE:'🎯 ODAKLI ATEŞ'};
+  try {
+    await fetch(API+'/api/alliance/radio',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({wallet,command:cmd})});
+    showToast(`📻 Telsiz yayını: ${labels[cmd]||cmd}`,'success');
+    addChatSystem(`📻 TELSİZ KOMUTU: ${labels[cmd]||cmd}`);
+    closeRadioModal();
+  } catch(e) { showToast('Telsiz yayını başarısız.','error'); }
+}
+
+function addChatSystem(text) {
+  const row = document.createElement('div');
+  row.className='chat-msg anim-new';
+  row.style.background='rgba(0,200,83,0.06)';
+  row.innerHTML=`<div class="chat-who"><span style="font-size:11px">📡</span><span class="chat-name" style="color:var(--green)">SİSTEM</span><span class="chat-t">şimdi</span></div><div class="chat-txt" style="color:var(--green)">${text}</div>`;
+  const body=document.getElementById('chatBody');
+  body.insertBefore(row,body.firstChild);
+}
+
+document.getElementById('allianceModal').addEventListener('click',function(e){if(e.target===this)closeAllianceModal();});
+document.getElementById('radioModal').addEventListener('click',function(e){if(e.target===this)closeRadioModal();});
+
 /* ── LB ── */
-function setLbTab(tab,el) {
-  document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('active'));
+function setLbTab(tab,el) {  document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
 }
 
