@@ -1,1292 +1,1009 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ABSWAR — Global War MMO</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>ABSWAR — Küresel Savaş MMO</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --red:#e8162a;--red2:#ff1a3c;--red-g:rgba(232,22,42,0.15);
-  --green:#00c853;--green2:#00ff88;
-  --bg:#0a0c0f;--bg1:#0d1117;--bg2:#111820;--bg3:#161e28;
+  --red:#e8162a;--green:#00c853;--cyan:#00f5ff;--gold:#f5c842;
+  --bg:#090c0f;--bg1:#0d1117;--bg2:#111820;--bg3:#161e28;
   --border:rgba(255,255,255,0.07);--border-r:rgba(232,22,42,0.3);
   --text:#b8ccd8;--dim:#4a6070;
   --hud:'Orbitron',monospace;--mono:'Share Tech Mono',monospace;--ui:'Rajdhani',sans-serif;
 }
 html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:var(--ui);overflow:hidden;font-size:13px}
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#1e2d3d}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(to bottom,transparent 0 2px,rgba(0,0,0,0.05) 2px 4px);pointer-events:none;z-index:9998}
 
-/* SCANLINES */
-body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(to bottom,transparent 0 2px,rgba(0,0,0,0.06) 2px 4px);pointer-events:none;z-index:9999}
+.topnav{display:flex;align-items:center;height:44px;background:var(--bg1);border-bottom:1px solid var(--border);padding:0 16px;z-index:100}
+.logo-main{font-family:var(--hud);font-size:18px;font-weight:900;color:var(--red);letter-spacing:3px;text-shadow:0 0 20px rgba(232,22,42,0.6);margin-right:6px}
+.logo-sub{font-size:8px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-right:24px;align-self:flex-end;padding-bottom:2px}
+.nav-link{padding:0 11px;height:44px;display:flex;align-items:center;font-family:var(--hud);font-size:9px;letter-spacing:2px;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;text-transform:uppercase}
+.nav-link:hover{color:var(--text)}.nav-link.active{color:var(--red);border-bottom-color:var(--red)}
+.btn-wallet{padding:7px 16px;background:var(--red);color:white;font-family:var(--hud);font-size:9px;letter-spacing:2px;border:none;cursor:pointer;border-radius:2px;transition:all .15s}
+.btn-wallet:hover{background:#ff1a3c;box-shadow:0 0 16px rgba(232,22,42,0.4)}
+.btn-wallet.connected{background:transparent;border:1px solid var(--green);color:var(--green)}
 
-/* TOP NAV */
-.topnav{
-  display:flex;align-items:center;gap:0;
-  height:44px;background:var(--bg1);
-  border-bottom:1px solid var(--border);
-  padding:0 16px;position:relative;z-index:10;
-}
-.logo{display:flex;flex-direction:column;margin-right:28px;line-height:1}
-.logo-main{font-family:var(--hud);font-size:18px;font-weight:900;color:var(--red);letter-spacing:3px;text-shadow:0 0 20px rgba(232,22,42,0.6)}
-.logo-sub{font-size:8px;letter-spacing:3px;color:var(--dim);text-transform:uppercase}
-.nav-links{display:flex;gap:2px}
-.nav-link{
-  padding:0 14px;height:44px;display:flex;align-items:center;
-  font-family:var(--hud);font-size:9px;letter-spacing:2px;text-transform:uppercase;
-  color:var(--dim);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;
-}
-.nav-link:hover{color:var(--text)}
-.nav-link.active{color:var(--red);border-bottom-color:var(--red)}
-.nav-right{margin-left:auto;display:flex;align-items:center;gap:12px}
-.eth-bal{font-family:var(--mono);font-size:12px;color:var(--red)}
-.btn-wallet{
-  padding:8px 18px;background:var(--red);color:white;
-  font-family:var(--hud);font-size:9px;letter-spacing:2px;
-  border:none;cursor:pointer;border-radius:2px;transition:all .15s;
-}
-.btn-wallet:hover{background:#ff1a3c;box-shadow:0 0 16px rgba(232,22,42,0.5)}
-.btn-wallet.connected{background:transparent;border:1px solid var(--green);color:var(--green);font-size:9px}
+.layout{display:grid;grid-template-columns:168px 1fr 238px 238px;grid-template-rows:1fr 192px;height:calc(100vh - 44px - 26px);gap:1px;background:rgba(255,255,255,0.04)}
+.cell{background:var(--bg1);overflow:hidden;position:relative;display:flex;flex-direction:column}
+.sh{padding:7px 12px;border-bottom:1px solid var(--border);font-family:var(--hud);font-size:8px;letter-spacing:2px;color:var(--text);text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.sl{font-family:var(--hud);font-size:8px;letter-spacing:2px;color:var(--dim);text-transform:uppercase}
+.ldot{width:6px;height:6px;border-radius:50%;background:var(--red);box-shadow:0 0 8px var(--red);display:inline-block;animation:blink 1s infinite;margin-right:6px}
+.gdot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);display:inline-block;animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.hpb{height:5px;background:rgba(255,255,255,0.07);border-radius:1px;overflow:hidden}
+.hpf{height:100%;background:linear-gradient(90deg,var(--red),#ff4500);box-shadow:0 0 6px var(--red);transition:width .6s}
+.btn-sm{padding:5px 10px;font-family:var(--hud);font-size:8px;letter-spacing:1px;border:none;cursor:pointer;border-radius:1px;transition:all .15s}
+.btn-red{background:var(--red);color:white}.btn-red:hover{background:#ff1a3c;box-shadow:0 0 10px rgba(232,22,42,0.4)}
+.btn-red:disabled{background:#2a0810;color:#555;cursor:not-allowed;box-shadow:none}
+.btn-out{background:transparent;border:1px solid var(--border);color:var(--dim)}.btn-out:hover{border-color:var(--red);color:var(--red)}
 
-/* MAIN LAYOUT */
-.main{
-  display:grid;
-  grid-template-columns:170px 1fr 240px 240px;
-  grid-template-rows:1fr 200px 28px;
-  height:calc(100vh - 44px - 28px);
-  gap:1px;background:rgba(255,255,255,0.04);
-}
-.cell{background:var(--bg1);overflow:hidden;position:relative}
+/* LEFT */
+.act-item{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,0.03);cursor:pointer;transition:background .1s}
+.act-item:hover{background:rgba(255,255,255,0.02)}
+.act-country{font-family:var(--hud);font-size:9px;color:var(--text);letter-spacing:1px}
+.act-detail{font-size:9px;color:var(--dim);margin-top:1px}
+.act-detail b{color:#888}
+.act-time{font-size:8px;color:var(--dim);margin-top:1px}
 
-/* LEFT SIDEBAR */
-.left-sidebar{
-  grid-column:1;grid-row:1/3;
-  display:flex;flex-direction:column;
-  background:var(--bg1);
-}
-.live-badge{
-  display:flex;align-items:center;gap:8;padding:10px 12px;
-  border-bottom:1px solid var(--border);
-}
-.live-dot{width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 8px var(--red);animation:blink 1s infinite}
-.live-text{font-family:var(--hud);font-size:11px;font-weight:700;color:var(--red);letter-spacing:3px;margin-left:7px}
-.season-info{padding:8px 12px;border-bottom:1px solid var(--border)}
-.season-label{font-size:8px;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
-.season-name{font-family:var(--hud);font-size:9px;color:var(--text);letter-spacing:1px;margin-top:2px}
-.timer-box{padding:8px 12px;border-bottom:1px solid var(--border)}
-.timer-label{font-size:8px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
-.timer-val{font-family:var(--mono);font-size:15px;color:var(--red);letter-spacing:2px}
-
-.war-activity{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.section-header{
-  padding:8px 12px;border-bottom:1px solid var(--border);
-  font-family:var(--hud);font-size:9px;letter-spacing:2px;color:var(--text);text-transform:uppercase;
-  display:flex;align-items:center;justify-content:space-between;
-}
-.activity-list{flex:1;overflow-y:auto;padding:4px 0}
-.activity-item{padding:7px 12px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background .1s;cursor:pointer}
-.activity-item:hover{background:rgba(255,255,255,0.03)}
-.act-country{font-family:var(--hud);font-size:10px;color:var(--text);letter-spacing:1px}
-.act-detail{font-size:10px;color:var(--dim);margin-top:1px}
-.act-detail span{color:#888}
-.act-time{font-size:9px;color:var(--dim)}
-.act-dot{width:5px;height:5px;border-radius:50%;background:var(--red);display:inline-block;margin-right:6px;box-shadow:0 0 6px var(--red)}
-
-.btn-view-all{
-  margin:8px 12px;padding:7px;text-align:center;
-  border:1px solid var(--border);color:var(--dim);
-  font-family:var(--hud);font-size:8px;letter-spacing:2px;cursor:pointer;
-  background:transparent;width:calc(100% - 24px);transition:all .15s;
-}
-.btn-view-all:hover{border-color:var(--red);color:var(--red)}
-
-/* MAP AREA */
-.map-area{
-  grid-column:2;grid-row:1/3;
-  position:relative;background:#0a0e12;
-  overflow:hidden;
-}
-.map-overlay-tools{
-  position:absolute;bottom:12px;left:12px;z-index:5;
-  display:flex;flex-direction:column;gap:6px;
-}
-.map-info-bar{
-  position:absolute;bottom:0;left:0;right:0;
-  background:rgba(10,12,15,0.85);border-top:1px solid var(--border);
-  display:flex;align-items:center;gap:16px;padding:6px 12px;z-index:5;
-  font-family:var(--mono);font-size:10px;color:var(--dim);
-}
-
-/* MAP SVG */
-.world-map-svg{width:100%;height:100%}
+/* MAP */
+#mapSvg{width:100%;height:100%;cursor:crosshair}
+.country-land{fill:#0f2a18;stroke:#1a4a28;stroke-width:0.4;transition:fill .2s;cursor:crosshair}
+.country-land:hover{fill:#1a3d22;stroke:#00c853;stroke-width:0.6}
+.country-land.my-country{fill:#0a2d0a;stroke:#00c853;stroke-width:0.8}
+.country-land.targeted{fill:#2d0a0a;stroke:#e8162a;stroke-width:0.8}
+.country-land.eliminated{fill:#1a1a1a;stroke:#333;stroke-width:0.3;opacity:0.4}
+.city-dot{fill:#e8162a;cursor:crosshair}
+.city-dot.my-city{fill:#00c853}
+.city-dot.target-city{fill:#ff4500}
+.city-label{font-family:'Share Tech Mono',monospace;font-size:7px;fill:#b8ccd8;pointer-events:none}
+.hp-label{font-family:'Share Tech Mono',monospace;font-size:6.5px;fill:rgba(184,204,216,0.6);pointer-events:none}
 
 /* RIGHT PANELS */
-.right-top{grid-column:3;grid-row:1;display:flex;flex-direction:column}
-.right-top2{grid-column:4;grid-row:1;display:flex;flex-direction:column}
+.co-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.co-rank{background:var(--red);color:white;font-family:var(--hud);padding:2px 6px;text-align:center;font-size:8px}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border);flex-shrink:0}
+.stat-cell{padding:7px 8px;border-right:1px solid var(--border)}
+.stat-cell:last-child{border-right:none}
+.stat-label{font-size:7px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+.stat-val{font-family:var(--mono);font-size:10px;color:var(--text)}
+.boost-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.boost-card{background:var(--bg2);border:1px solid var(--border);padding:5px 3px;text-align:center;border-radius:1px}
+.boost-icon{font-size:14px;display:block}
+.boost-type{font-family:var(--hud);font-size:6px;color:var(--dim);letter-spacing:1px;margin-top:1px}
+.boost-val{font-family:var(--mono);font-size:9px;color:var(--green);margin-top:1px}
+.boost-timer{font-size:7px;color:var(--dim)}
+.ammo-row{display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid rgba(255,255,255,0.04)}
+.ammo-info{flex:1}.ammo-name{font-family:var(--hud);font-size:9px;color:var(--text);letter-spacing:1px}
+.ammo-sub{font-size:8px;color:var(--dim);margin-top:1px}
+.ammo-price{font-family:var(--mono);font-size:10px;color:var(--red);white-space:nowrap;margin-right:4px}
 
-/* COUNTRY OVERVIEW */
-.country-overview{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.co-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:10px 14px;border-bottom:1px solid var(--border);
-}
-.co-flag-name{display:flex;align-items:center;gap:8px}
-.co-flag{font-size:20px}
-.co-name{font-family:var(--hud);font-size:13px;font-weight:700;color:white;letter-spacing:2px}
-.co-rank{
-  background:var(--red);color:white;font-family:var(--hud);
-  font-size:9px;padding:3px 6px;text-align:center;
-}
-.rank-label{font-size:7px;color:rgba(255,255,255,0.7);letter-spacing:2px;display:block}
-.rank-num{font-size:14px;font-weight:900}
-
-.hp-section{padding:10px 14px;border-bottom:1px solid var(--border)}
-.hp-numbers{display:flex;justify-content:space-between;margin-bottom:5px}
-.hp-current{font-family:var(--hud);font-size:14px;color:white}
-.hp-max{font-family:var(--mono);font-size:10px;color:var(--dim);align-self:flex-end}
-.hp-bar{height:6px;background:rgba(255,255,255,0.08);border-radius:1px;overflow:hidden;margin-bottom:3px}
-.hp-fill{height:100%;background:linear-gradient(90deg,var(--red),#ff4500);box-shadow:0 0 8px var(--red);transition:width .6s}
-.hp-pct{font-family:var(--mono);font-size:9px;color:var(--red);text-align:right}
-
-.co-stats{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border)}
-.co-stat{padding:8px 10px;border-right:1px solid var(--border)}
-.co-stat:last-child{border-right:none}
-.co-stat-label{font-size:8px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px}
-.co-stat-val{font-family:var(--mono);font-size:11px;color:var(--text)}
-
-.boosts-section{padding:8px 12px;border-bottom:1px solid var(--border)}
-.boosts-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
-.boost-card{
-  background:var(--bg2);border:1px solid var(--border);
-  padding:7px 5px;text-align:center;border-radius:2px;cursor:pointer;transition:border-color .15s;
-}
-.boost-card:hover{border-color:rgba(0,200,83,0.4)}
-.boost-icon{font-size:16px;display:block;margin-bottom:3px}
-.boost-type{font-family:var(--hud);font-size:7px;color:var(--dim);letter-spacing:1px}
-.boost-val{font-family:var(--mono);font-size:10px;color:var(--green);margin-top:2px}
-.boost-timer{font-size:8px;color:var(--dim);margin-top:1px}
-
-/* BUY AMMO */
-.ammo-section{flex:1;overflow-y:auto;padding:8px 12px}
-.ammo-row{
-  display:flex;align-items:center;gap:8px;padding:8px 0;
-  border-bottom:1px solid rgba(255,255,255,0.04);
-}
-.ammo-icon{font-size:18px;flex-shrink:0}
-.ammo-info{flex:1}
-.ammo-name{font-family:var(--hud);font-size:10px;color:var(--text);letter-spacing:1px}
-.ammo-bullets{font-size:9px;color:var(--dim);margin-top:1px}
-.ammo-price{font-family:var(--mono);font-size:11px;color:var(--red);margin-right:8px}
-.btn-buy{
-  padding:5px 10px;background:var(--red);color:white;
-  font-family:var(--hud);font-size:8px;letter-spacing:1px;
-  border:none;cursor:pointer;border-radius:1px;white-space:nowrap;transition:all .15s;
-}
-.btn-buy:hover{background:#ff1a3c;box-shadow:0 0 12px rgba(232,22,42,0.4)}
-.btn-buy:disabled{background:#2a1018;color:#555;cursor:not-allowed}
-
-/* LEADERBOARD */
-.lb-tabs{display:flex;border-bottom:1px solid var(--border)}
-.lb-tab{
-  flex:1;padding:8px;text-align:center;cursor:pointer;
-  font-family:var(--hud);font-size:8px;letter-spacing:2px;text-transform:uppercase;
-  color:var(--dim);border-bottom:2px solid transparent;transition:all .15s;
-}
+/* LB */
+.lb-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.lb-tab{flex:1;padding:6px;text-align:center;cursor:pointer;font-family:var(--hud);font-size:7px;letter-spacing:2px;color:var(--dim);border-bottom:2px solid transparent;transition:all .15s}
 .lb-tab.active{color:var(--text);border-bottom-color:var(--red)}
-.lb-list{overflow-y:auto;flex:1;padding:4px 0}
-.lb-row{
-  display:flex;align-items:center;gap:8px;padding:6px 14px;
-  border-bottom:1px solid rgba(255,255,255,0.03);transition:background .1s;
-}
-.lb-row:hover{background:rgba(255,255,255,0.02)}
-.lb-row.me{background:rgba(232,22,42,0.08)}
-.lb-num{font-family:var(--mono);font-size:10px;color:var(--dim);width:16px;text-align:right}
-.lb-flag{font-size:14px}
-.lb-name{font-family:var(--hud);font-size:9px;color:var(--text);letter-spacing:1px;flex:1}
-.lb-hp{font-family:var(--mono);font-size:10px;color:var(--dim);white-space:nowrap}
-.lb-view-all{
-  margin:8px 14px;padding:7px;text-align:center;border:1px solid var(--border);
-  font-family:var(--hud);font-size:8px;letter-spacing:2px;color:var(--dim);cursor:pointer;
-  background:transparent;width:calc(100% - 28px);transition:all .15s;
-}
-.lb-view-all:hover{border-color:var(--red);color:var(--red)}
+.lb-row{display:flex;align-items:center;gap:6px;padding:5px 12px;border-bottom:1px solid rgba(255,255,255,0.03)}
+.lb-row.me{background:rgba(232,22,42,0.07)}
+.lb-num{font-family:var(--mono);font-size:9px;color:var(--dim);width:14px;text-align:right}
+.lb-name{font-family:var(--hud);font-size:8px;color:var(--text);letter-spacing:1px;flex:1}
+.lb-hp{font-family:var(--mono);font-size:9px;color:var(--dim);white-space:nowrap}
+.ys-row{display:flex;justify-content:space-between;padding:4px 12px;border-bottom:1px solid rgba(255,255,255,0.03)}
+.ys-l{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.ys-v{font-family:var(--mono);font-size:9px;color:var(--text)}
+.ys-v.red{color:var(--red)}.ys-v.green{color:var(--green)}
 
-/* YOUR STATS */
-.your-stats{padding:8px 14px}
-.ys-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
-.ys-label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
-.ys-val{font-family:var(--mono);font-size:10px;color:var(--text)}
-.ys-val.red{color:var(--red)}
-.ys-val.green{color:var(--green)}
-
-/* BOTTOM PANELS */
-.bottom-row{
-  grid-column:1/5;grid-row:2;
-  display:grid;grid-template-columns:220px 280px 280px 1fr 240px;
-  gap:1px;background:rgba(255,255,255,0.04);
-}
-.bottom-cell{background:var(--bg1);overflow:hidden;display:flex;flex-direction:column}
-
-/* ATTACK HISTORY */
-.ah-table{flex:1;overflow-y:auto}
-.ah-head{display:grid;grid-template-columns:1fr 80px 60px;padding:5px 12px;
-  font-family:var(--hud);font-size:8px;letter-spacing:1px;color:var(--dim);
-  border-bottom:1px solid var(--border);text-transform:uppercase}
-.ah-row{display:grid;grid-template-columns:1fr 80px 60px;padding:5px 12px;
-  border-bottom:1px solid rgba(255,255,255,0.03);align-items:center;transition:background .1s}
-.ah-row:hover{background:rgba(255,255,255,0.02)}
-.ah-target{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text)}
-.ah-dmg{font-family:var(--mono);font-size:10px;color:var(--red);font-weight:600}
-.ah-time{font-size:9px;color:var(--dim)}
-
-/* ALLIANCE CHAT */
-.chat-body{flex:1;overflow-y:auto;padding:6px 0}
-.chat-msg{padding:5px 12px;border-bottom:1px solid rgba(255,255,255,0.03)}
-.chat-sender{display:flex;align-items:center;gap:5px;margin-bottom:2px}
-.chat-flag{font-size:11px}
-.chat-name{font-family:var(--hud);font-size:9px;color:var(--text);letter-spacing:1px}
-.chat-alliance{font-size:8px;color:var(--green);margin-left:2px}
-.chat-time{font-size:8px;color:var(--dim);margin-left:auto}
-.chat-text{font-size:10px;color:var(--dim);padding-left:16px}
-.chat-input-row{
-  display:flex;gap:0;border-top:1px solid var(--border);
-  padding:6px 8px;background:var(--bg);
-}
-.chat-input{
-  flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--text);
-  font-family:var(--ui);font-size:11px;padding:5px 8px;outline:none;
-}
-.chat-input::placeholder{color:var(--dim)}
-.chat-send{
-  padding:5px 10px;background:var(--red);color:white;
-  font-size:14px;border:none;cursor:pointer;transition:background .15s;
-}
-.chat-send:hover{background:#ff1a3c}
-
-/* RADAR */
-.radar-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:8px;gap:12px}
-.radar-canvas{position:relative;width:120px;height:120px;flex-shrink:0}
-.radar-svg{width:100%;height:100%}
-.radar-detected{flex:1;overflow-y:auto}
-.det-row{
-  display:flex;align-items:center;gap:6px;padding:5px 0;
-  border-bottom:1px solid rgba(255,255,255,0.04);
-}
-.det-flag{font-size:12px}
-.det-country{font-family:var(--hud);font-size:9px;color:var(--text);letter-spacing:1px}
-.det-activity{font-size:9px;margin-top:1px}
-.det-time{font-size:8px;color:var(--dim);margin-left:auto;white-space:nowrap}
-.massive{color:var(--red)}
-.nuclear{color:#ff6b35}
-.movement{color:#f5c842}
-.alliance-m{color:var(--green)}
-
-/* RESOURCE CONTROL */
-.res-body{flex:1;overflow-y:auto;padding:8px 14px}
-.res-row{margin-bottom:12px}
-.res-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
-.res-name{display:flex;align-items:center;gap:6px;font-family:var(--hud);font-size:9px;letter-spacing:1px;color:var(--text)}
-.res-icon{font-size:14px}
-.res-pct{font-family:var(--mono);font-size:10px;color:var(--text)}
-.res-bar{height:4px;background:rgba(255,255,255,0.07);border-radius:1px;overflow:hidden;margin-bottom:2px}
-.res-fill{height:100%;border-radius:1px;transition:width .6s}
-.res-change{font-size:8px;text-align:right}
-.pos{color:var(--green)}.neg{color:var(--red)}
-
-/* WAR NEWS */
-.news-img{width:100%;height:70px;object-fit:cover;display:block;background:linear-gradient(135deg,#1a0a0a,#0d1520)}
-.news-body{flex:1;overflow-y:auto;padding:8px 12px}
-.news-headline{font-family:var(--hud);font-size:10px;color:white;letter-spacing:1px;margin-bottom:4px;line-height:1.4}
-.news-detail{font-size:9px;color:var(--dim);line-height:1.4;margin-bottom:8px}
-.news-sep{border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:8px}
-.news-minor{font-size:9px;color:var(--text);padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);line-height:1.4}
-.news-minor-time{font-size:8px;color:var(--dim);margin-top:2px}
-
-/* FOOTER */
-.footer{
-  grid-column:1/5;grid-row:3;
-  display:flex;align-items:center;
-  background:var(--bg);border-top:1px solid var(--border);
-  padding:0 16px;gap:16px;
-}
-.footer-logo{font-family:var(--hud);font-size:11px;font-weight:900;color:var(--red);letter-spacing:3px}
-.footer-copy{font-size:8px;color:var(--dim);letter-spacing:1px}
-.footer-links{display:flex;gap:14px;margin:0 auto}
-.footer-link{font-size:10px;color:var(--dim);cursor:pointer;transition:color .15s}
-.footer-link:hover{color:var(--text)}
-.footer-social{display:flex;gap:10px}
-.social-icon{font-size:13px;color:var(--dim);cursor:pointer;transition:color .15s}
-.social-icon:hover{color:var(--text)}
-.footer-online{text-align:right}
-.online-label{font-size:8px;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
-.online-count{font-family:var(--mono);font-size:16px;color:var(--green);font-weight:700}
-.btn-join{
-  padding:8px 20px;background:var(--red);color:white;
-  font-family:var(--hud);font-size:9px;letter-spacing:2px;
-  border:none;cursor:pointer;border-radius:2px;
-  box-shadow:0 0 20px rgba(232,22,42,0.3);transition:all .15s;margin-left:12px;
-}
-.btn-join:hover{background:#ff1a3c;box-shadow:0 0 30px rgba(232,22,42,0.5)}
+/* BOTTOM */
+.ah-head{display:grid;grid-template-columns:1fr 70px 55px;padding:4px 10px;font-family:var(--hud);font-size:7px;letter-spacing:1px;color:var(--dim);border-bottom:1px solid var(--border);text-transform:uppercase;flex-shrink:0}
+.ah-row{display:grid;grid-template-columns:1fr 70px 55px;padding:4px 10px;border-bottom:1px solid rgba(255,255,255,0.03);align-items:center}
+.ah-dmg{font-family:var(--mono);font-size:9px;color:var(--red);font-weight:600}
+.ah-time{font-size:8px;color:var(--dim)}
+.chat-body{flex:1;overflow-y:auto;padding:2px 0}
+.chat-msg{padding:4px 10px;border-bottom:1px solid rgba(255,255,255,0.03)}
+.chat-who{display:flex;align-items:center;gap:4px;margin-bottom:1px}
+.chat-name{font-family:var(--hud);font-size:8px;color:var(--text);letter-spacing:1px}
+.chat-t{font-size:7px;color:var(--dim);margin-left:auto}
+.chat-txt{font-size:9px;color:var(--dim);padding-left:14px}
+.chat-input-row{display:flex;border-top:1px solid var(--border);flex-shrink:0}
+.chat-inp{flex:1;background:var(--bg2);border:none;color:var(--text);font-family:var(--ui);font-size:11px;padding:5px 8px;outline:none}
+.chat-inp::placeholder{color:var(--dim)}
+.chat-send{padding:5px 10px;background:var(--red);color:white;font-size:13px;border:none;cursor:pointer}
+.radar-wrap{display:flex;align-items:flex-start;gap:8px;padding:8px;flex:1;overflow:hidden}
+.det-row{display:flex;align-items:center;gap:5px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.det-country{font-family:var(--hud);font-size:8px;color:var(--text);letter-spacing:1px}
+.det-act{font-size:8px;margin-top:1px}
+.massive{color:var(--red)}.nuclear{color:#ff6b35}.movement{color:var(--gold)}.alliance-m{color:var(--green)}
+.res-row{margin-bottom:8px;padding:0 12px}
+.res-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.res-name{font-family:var(--hud);font-size:8px;letter-spacing:1px;color:var(--text)}
+.res-pct{font-family:var(--mono);font-size:9px;color:var(--text)}
+.res-bar{height:3px;background:rgba(255,255,255,0.07);border-radius:1px;overflow:hidden;margin-bottom:2px}
+.res-fill{height:100%;border-radius:1px}
+.res-chg{font-size:7px;text-align:right}.pos{color:var(--green)}.neg{color:var(--red)}
 
 /* TICKER */
-.ticker-bar{
-  grid-column:1/5;
-  display:flex;align-items:center;
-  background:rgba(10,12,15,0.95);border-top:1px solid var(--border);
-  height:28px;overflow:hidden;
-  position:fixed;bottom:0;left:0;right:0;z-index:20;
-}
-.ticker-label{
-  padding:0 12px;font-family:var(--hud);font-size:8px;letter-spacing:2px;
-  white-space:nowrap;display:flex;align-items:center;gap:6px;
-  border-right:1px solid var(--border);height:100%;
-}
-.ticker-red{color:var(--red)}
-.ticker-warn{color:#f5c842}
+.ticker{position:fixed;bottom:0;left:0;right:0;height:26px;background:rgba(9,12,15,0.97);border-top:1px solid var(--border);display:flex;align-items:center;z-index:200}
+.ticker-lbl{padding:0 10px;font-family:var(--hud);font-size:7px;letter-spacing:2px;white-space:nowrap;display:flex;align-items:center;border-right:1px solid var(--border);height:100%;color:var(--red)}
+.ticker-warn{color:var(--gold)}
 .ticker-scroll{flex:1;overflow:hidden;height:100%;display:flex;align-items:center}
-.ticker-inner{
-  display:flex;gap:40px;
-  animation:tickerScroll 30s linear infinite;
-  white-space:nowrap;font-family:var(--mono);font-size:10px;color:var(--dim);
-}
-.ticker-item span{color:var(--text);margin-right:4px}
-
-/* SECTION LABEL */
-.sec-label{
-  font-family:var(--hud);font-size:8px;letter-spacing:2px;
-  color:var(--dim);text-transform:uppercase;margin-bottom:6px;
-}
-
-/* RADAR SVG ANIMATION */
-@keyframes radarSweep{to{transform:rotate(360deg);transform-origin:center}}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-@keyframes tickerScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-@keyframes fadeInUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-@keyframes attackFlash{0%{background:rgba(232,22,42,0.2)}100%{background:transparent}}
-
-.anim-new{animation:fadeInUp .3s ease both}
-
-/* TOAST */
-.toast{
-  position:fixed;bottom:36px;left:50%;transform:translateX(-50%);
-  padding:10px 20px;border-radius:2px;
-  font-family:var(--mono);font-size:11px;
-  z-index:1000;pointer-events:none;
-  transition:opacity .25s;
-}
-.toast.show{opacity:1}
-.toast.hide{opacity:0}
-.toast.success{background:rgba(0,200,83,0.15);border:1px solid rgba(0,200,83,0.35);color:var(--green)}
-.toast.error{background:rgba(232,22,42,0.15);border:1px solid rgba(232,22,42,0.35);color:var(--red)}
-.toast.info{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--text)}
+.ticker-inner{display:flex;gap:40px;white-space:nowrap;font-family:var(--mono);font-size:9px;color:var(--dim);animation:tickerAnim 35s linear infinite}
+@keyframes tickerAnim{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ticker-online{padding:0 10px;font-family:var(--mono);font-size:9px;color:var(--green);border-left:1px solid var(--border);white-space:nowrap}
+.btn-join{padding:6px 16px;background:var(--red);color:white;font-family:var(--hud);font-size:8px;letter-spacing:2px;border:none;cursor:pointer;box-shadow:0 0 16px rgba(232,22,42,0.3);transition:all .15s;margin:0 6px;border-radius:1px}
+.btn-join:hover{background:#ff1a3c;box-shadow:0 0 24px rgba(232,22,42,0.5)}
 
 /* MODAL */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:500;backdrop-filter:blur(6px)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:500;backdrop-filter:blur(6px)}
 .modal.show{display:flex}
-.modal-box{background:var(--bg1);border:1px solid var(--border-r);padding:24px;width:340px;animation:fadeInUp .2s ease both}
-.modal-title{font-family:var(--hud);font-size:13px;color:var(--red);letter-spacing:3px;margin-bottom:16px}
-.country-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.country-btn{
-  padding:10px 6px;background:var(--bg2);border:1px solid var(--border);
-  color:var(--text);font-family:var(--hud);font-size:9px;letter-spacing:1px;
-  cursor:pointer;text-align:center;transition:all .15s;
-}
-.country-btn:hover{border-color:var(--red);color:white;background:rgba(232,22,42,0.1)}
-.modal-close{float:right;background:transparent;border:1px solid var(--border);color:var(--dim);padding:4px 10px;cursor:pointer;font-size:11px}
+.modal-box{background:var(--bg1);border:1px solid var(--border-r);padding:20px;width:360px;animation:fadeUp .2s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.modal-title{font-family:var(--hud);font-size:12px;color:var(--red);letter-spacing:3px;margin-bottom:6px}
+.modal-sub{font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:14px}
+.modal-close{float:right;background:transparent;border:1px solid var(--border);color:var(--dim);padding:3px 8px;cursor:pointer;font-size:10px;transition:all .15s}
 .modal-close:hover{border-color:var(--red);color:var(--red)}
+.c-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.c-btn{padding:8px 4px;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:var(--hud);font-size:8px;letter-spacing:1px;cursor:pointer;text-align:center;transition:all .15s;border-radius:1px}
+.c-btn:hover{border-color:var(--red);color:white;background:rgba(232,22,42,0.1)}
+.c-btn:disabled{opacity:0.25;cursor:not-allowed;border-color:var(--border)}
+
+/* TOAST */
+.toast{position:fixed;bottom:34px;left:50%;transform:translateX(-50%);padding:9px 18px;border-radius:2px;font-family:var(--mono);font-size:11px;z-index:1000;pointer-events:none;opacity:0;transition:opacity .2s;white-space:nowrap}
+.toast.show{opacity:1}
+.toast.success{background:rgba(0,200,83,0.12);border:1px solid rgba(0,200,83,0.35);color:var(--green)}
+.toast.error{background:rgba(232,22,42,0.12);border:1px solid rgba(232,22,42,0.35);color:var(--red)}
+.toast.info{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:var(--text)}
+
+.anim-new{animation:fadeUp .3s ease both}
+@keyframes scanLine{0%{top:0}100%{top:100%}}
+@keyframes radarSpin{to{transform:rotate(360deg);transform-origin:60px 60px}}
 </style>
 </head>
 <body>
 
-<!-- TOP NAV -->
+<!-- NAV -->
 <nav class="topnav">
-  <div class="logo">
-    <span class="logo-main">ABSWAR</span>
-    <span class="logo-sub">Global War MMO</span>
+  <span class="logo-main">ABSWAR</span>
+  <span class="logo-sub">Küresel Savaş MMO</span>
+  <div style="display:flex">
+    <div class="nav-link">KONTROL PANELİ</div>
+    <div class="nav-link active">HARİTA</div>
+    <div class="nav-link">ÜLKELER</div>
+    <div class="nav-link">İTTİFAKLAR</div>
+    <div class="nav-link">İSTATİSTİKLER</div>
+    <div class="nav-link">PAZAR</div>
+    <div class="nav-link">SIRALAMA</div>
   </div>
-  <div class="nav-links">
-    <div class="nav-link">DASHBOARD</div>
-    <div class="nav-link active">MAP</div>
-    <div class="nav-link">COUNTRIES</div>
-    <div class="nav-link">ALLIANCES</div>
-    <div class="nav-link">STATS</div>
-    <div class="nav-link">MARKET</div>
-    <div class="nav-link">RANKING</div>
-  </div>
-  <div class="nav-right">
-    <span class="eth-bal" id="ethBal">0.000 ETH</span>
-    <button class="btn-wallet" id="walletBtn" onclick="connectWallet()">CONNECT WALLET</button>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+    <span style="font-family:var(--mono);font-size:11px;color:var(--red)" id="ethBal">0.000 ETH</span>
+    <button class="btn-wallet" id="walletBtn" onclick="connectWallet()">WALLET BAĞLA</button>
   </div>
 </nav>
 
-<!-- MAIN GRID -->
-<div style="height:calc(100vh - 44px - 28px);display:grid;grid-template-columns:170px 1fr 240px 240px;grid-template-rows:1fr 200px;gap:1px;background:rgba(255,255,255,0.04)">
+<!-- LAYOUT -->
+<div class="layout">
 
-  <!-- LEFT SIDEBAR -->
-  <div style="grid-column:1;grid-row:1/3;background:var(--bg1);display:flex;flex-direction:column;overflow:hidden">
-    <div class="live-badge" style="display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border)">
-      <span class="live-dot"></span>
-      <span class="live-text">LIVE WAR</span>
-    </div>
-    <div style="padding:7px 12px;border-bottom:1px solid var(--border)">
-      <div class="sec-label">SEASON 1: FIRST COLLAPSE</div>
-    </div>
-    <div style="padding:8px 12px;border-bottom:1px solid var(--border)">
-      <div class="sec-label">TIME REMAINING</div>
-      <div class="timer-val" id="timerVal">23D 14H 42M 18S</div>
-    </div>
+<!-- LEFT SIDEBAR -->
+<div class="cell" style="grid-column:1;grid-row:1/3">
+  <div style="padding:8px 10px;border-bottom:1px solid var(--border);flex-shrink:0">
+    <div style="display:flex;align-items:center"><span class="ldot"></span><span style="font-family:var(--hud);font-size:11px;font-weight:700;color:var(--red);letter-spacing:3px">CANLI SAVAŞ</span></div>
+    <div style="font-size:8px;color:var(--dim);letter-spacing:2px;margin-top:2px">SEZON 1: İLK ÇÖKÜŞ</div>
+  </div>
+  <div style="padding:6px 10px;border-bottom:1px solid var(--border);flex-shrink:0">
+    <div class="sl">KALAN SÜRE</div>
+    <div style="font-family:var(--mono);font-size:14px;color:var(--red);letter-spacing:2px;margin-top:3px" id="timerVal">23G 14S 42D 18S</div>
+  </div>
+  <div class="sh" style="flex-shrink:0">SAVAŞ FAALİYETİ</div>
+  <div style="flex:1;overflow-y:auto" id="activityList">
+    <div class="act-item"><div class="act-country"><span class="ldot" style="width:4px;height:4px;margin-right:5px"></span>ALMANYA</div><div class="act-detail">saldırdı: <b>FRANSA</b></div><div class="act-time">2dk önce</div></div>
+    <div class="act-item"><div class="act-country"><span class="ldot" style="width:4px;height:4px;margin-right:5px"></span>TÜRKİYE</div><div class="act-detail">saldırdı: <b>YUNANİSTAN</b></div><div class="act-time">3dk önce</div></div>
+    <div class="act-item"><div class="act-country"><span class="ldot" style="width:4px;height:4px;margin-right:5px"></span>ABD</div><div class="act-detail">saldırdı: <b>ÇİN</b></div><div class="act-time">5dk önce</div></div>
+    <div class="act-item"><div class="act-country"><span class="ldot" style="width:4px;height:4px;margin-right:5px"></span>RUSYA</div><div class="act-detail">saldırdı: <b>UKRAYNA</b></div><div class="act-time">8dk önce</div></div>
+  </div>
+  <button class="btn-sm btn-out" style="margin:8px;width:calc(100% - 16px)" onclick="openModal('target')">TÜMÜ GÖRÜNTÜLE</button>
+</div>
 
-    <div class="section-header">
-      WAR ACTIVITY
+<!-- MAP -->
+<div class="cell" style="grid-column:2;grid-row:1/3;background:#070b0e;position:relative">
+  <!-- Grid -->
+  <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.06;pointer-events:none;z-index:1">
+    <defs><pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M30 0L0 0 0 30" fill="none" stroke="#00c853" stroke-width="0.4"/></pattern></defs>
+    <rect width="100%" height="100%" fill="url(#grid)"/>
+  </svg>
+  <!-- Scan line -->
+  <div style="position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,200,83,0.25),transparent);animation:scanLine 5s linear infinite;z-index:2;pointer-events:none"></div>
+
+  <!-- WORLD MAP SVG -->
+  <svg id="mapSvg" viewBox="0 0 1010 520" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%;z-index:3">
+    <defs>
+      <filter id="gR"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="gG"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+
+    <!-- KUZEY AMERİKA -->
+    <path id="US" class="country-land" data-name="ABD" onclick="handleMapClick('US')"
+      d="M95,95 L105,80 L125,72 L155,68 L185,70 L210,75 L228,85 L238,100 L242,118 L238,138 L228,155 L215,168 L200,178 L185,185 L170,188 L155,185 L142,178 L128,168 L115,155 L102,138 L93,118 Z"/>
+    <path id="CA" class="country-land" data-name="KANADA" onclick="handleMapClick('CA')"
+      d="M70,42 L90,35 L120,30 L160,28 L200,30 L225,38 L240,52 L242,68 L228,78 L210,72 L185,68 L155,66 L125,70 L105,78 L88,85 L75,78 L65,65 Z"/>
+    <path id="MX" class="country-land" data-name="MEKSİKA" onclick="handleMapClick('MX')"
+      d="M115,188 L130,185 L155,188 L168,200 L172,215 L165,228 L152,235 L138,232 L125,222 L112,208 Z"/>
+    <path id="BR" class="country-land" data-name="BREZİLYA" onclick="handleMapClick('BR')"
+      d="M185,268 L205,258 L228,255 L248,260 L262,272 L268,290 L265,312 L255,330 L240,345 L222,352 L205,350 L190,338 L180,320 L175,300 L178,280 Z"/>
+    <path id="AR" class="country-land" data-name="ARJANTİN" onclick="handleMapClick('AR')"
+      d="M192,355 L208,352 L220,360 L225,378 L222,400 L212,418 L198,428 L185,425 L178,408 L178,388 L183,370 Z"/>
+    <path id="CO" class="country-land" data-name="KOLOMBİYA" onclick="handleMapClick('CO')"
+      d="M155,238 L172,232 L185,240 L188,255 L178,265 L162,268 L150,258 L148,245 Z"/>
+    <path id="VE" class="country-land" data-name="VENEZUELA" onclick="handleMapClick('VE')"
+      d="M175,240 L190,235 L205,240 L212,252 L205,260 L190,262 L178,255 Z"/>
+
+    <!-- AVRUPA -->
+    <path id="GB" class="country-land" data-name="BİRLEŞİK KRALLIK" onclick="handleMapClick('GB')"
+      d="M338,78 L345,72 L355,75 L358,85 L352,95 L342,98 L335,90 L334,82 Z"/>
+    <path id="FR" class="country-land" data-name="FRANSA" onclick="handleMapClick('FR')"
+      d="M348,98 L362,92 L378,95 L385,108 L382,122 L370,130 L355,128 L346,118 L344,108 Z"/>
+    <path id="DE" class="country-land" data-name="ALMANYA" onclick="handleMapClick('DE')"
+      d="M368,82 L382,78 L395,82 L400,95 L395,108 L382,112 L368,108 L362,95 Z"/>
+    <path id="ES" class="country-land" data-name="İSPANYA" onclick="handleMapClick('ES')"
+      d="M328,118 L348,112 L365,118 L368,132 L358,145 L340,148 L325,140 L320,128 Z"/>
+    <path id="IT" class="country-land" data-name="İTALYA" onclick="handleMapClick('IT')"
+      d="M372,118 L382,115 L392,122 L395,135 L388,148 L380,158 L372,152 L366,138 L365,125 Z"/>
+    <path id="PL" class="country-land" data-name="POLONYA" onclick="handleMapClick('PL')"
+      d="M388,78 L402,74 L415,78 L418,90 L412,102 L398,105 L385,100 L383,88 Z"/>
+    <path id="UA" class="country-land" data-name="UKRAYNA" onclick="handleMapClick('UA')"
+      d="M410,90 L428,85 L445,88 L452,100 L448,115 L432,120 L415,118 L405,108 L405,98 Z"/>
+    <path id="RO" class="country-land" data-name="ROMANYA" onclick="handleMapClick('RO')"
+      d="M405,110 L418,106 L432,110 L435,122 L428,132 L415,135 L402,128 L398,118 Z"/>
+    <path id="NL" class="country-land" data-name="HOLLANDA" onclick="handleMapClick('NL')"
+      d="M360,78 L368,75 L375,80 L372,90 L362,92 L355,86 Z"/>
+    <path id="SE" class="country-land" data-name="İSVEÇ" onclick="handleMapClick('SE')"
+      d="M378,42 L388,35 L398,40 L400,58 L392,72 L380,75 L372,65 L370,52 Z"/>
+    <path id="NO" class="country-land" data-name="NORVEÇ" onclick="handleMapClick('NO')"
+      d="M355,35 L375,28 L390,32 L392,48 L378,55 L362,55 L350,48 Z"/>
+    <path id="GR" class="country-land" data-name="YUNANİSTAN" onclick="handleMapClick('GR')"
+      d="M395,138 L408,135 L415,145 L412,158 L402,162 L392,155 L390,145 Z"/>
+
+    <!-- TÜRKİYE & ORTA DOĞU -->
+    <path id="TR" class="country-land" data-name="TÜRKİYE" onclick="handleMapClick('TR')"
+      d="M440,122 L462,115 L488,118 L505,128 L508,142 L498,152 L478,155 L458,152 L440,145 L435,135 Z"/>
+    <path id="SY" class="country-land" data-name="SURİYE" onclick="handleMapClick('SY')"
+      d="M468,152 L485,148 L498,155 L500,168 L490,175 L472,175 L462,165 Z"/>
+    <path id="IQ" class="country-land" data-name="IRAK" onclick="handleMapClick('IQ')"
+      d="M488,155 L505,150 L518,158 L520,175 L512,188 L498,192 L485,182 L482,168 Z"/>
+    <path id="IR" class="country-land" data-name="İRAN" onclick="handleMapClick('IR')"
+      d="M510,140 L535,135 L555,142 L562,158 L558,178 L542,188 L520,185 L505,175 L502,158 Z"/>
+    <path id="SA" class="country-land" data-name="SUUDİ ARABİSTAN" onclick="handleMapClick('SA')"
+      d="M478,178 L502,172 L522,178 L528,198 L520,218 L502,225 L482,218 L470,200 Z"/>
+    <path id="IL" class="country-land" data-name="İSRAİL" onclick="handleMapClick('IL')"
+      d="M455,162 L462,158 L468,165 L465,175 L458,178 L450,172 Z"/>
+    <path id="AE" class="country-land" data-name="BAE" onclick="handleMapClick('AE')"
+      d="M528,195 L542,190 L550,200 L545,210 L530,212 L522,205 Z"/>
+
+    <!-- AFRİKA -->
+    <path id="EG" class="country-land" data-name="MISIR" onclick="handleMapClick('EG')"
+      d="M435,155 L455,150 L468,158 L470,178 L462,192 L442,195 L428,185 L425,168 Z"/>
+    <path id="NG" class="country-land" data-name="NİJERYA" onclick="handleMapClick('NG')"
+      d="M365,222 L385,218 L400,225 L402,242 L392,255 L372,258 L358,248 L355,232 Z"/>
+    <path id="ET" class="country-land" data-name="ETİYOPYA" onclick="handleMapClick('ET')"
+      d="M450,220 L468,215 L482,222 L485,238 L475,250 L458,252 L442,242 L440,228 Z"/>
+    <path id="ZA" class="country-land" data-name="GÜNEY AFRİKA" onclick="handleMapClick('ZA')"
+      d="M402,318 L422,312 L438,320 L440,340 L428,355 L408,358 L392,345 L390,328 Z"/>
+    <path id="KE" class="country-land" data-name="KENYA" onclick="handleMapClick('KE')"
+      d="M452,255 L468,250 L480,260 L478,278 L462,285 L448,278 L442,265 Z"/>
+    <path id="CD" class="country-land" data-name="KONGO" onclick="handleMapClick('CD')"
+      d="M408,258 L428,252 L445,260 L448,280 L438,298 L418,302 L400,292 L395,272 Z"/>
+    <path id="DZ" class="country-land" data-name="CEZAYİR" onclick="handleMapClick('DZ')"
+      d="M348,158 L372,152 L390,158 L392,182 L380,200 L358,205 L340,195 L335,175 Z"/>
+    <path id="MA" class="country-land" data-name="FAS" onclick="handleMapClick('MA')"
+      d="M322,155 L342,150 L355,158 L352,178 L338,188 L318,182 L310,168 Z"/>
+
+    <!-- RUSYA & ORTA ASYA -->
+    <path id="RU" class="country-land" data-name="RUSYA" onclick="handleMapClick('RU')"
+      d="M430,28 L520,18 L620,15 L700,22 L745,38 L748,62 L720,78 L680,82 L640,78 L600,72 L560,70 L530,75 L505,80 L480,78 L460,72 L442,62 L435,48 Z"/>
+    <path id="KZ" class="country-land" data-name="KAZAKİSTAN" onclick="handleMapClick('KZ')"
+      d="M520,82 L560,75 L598,80 L618,95 L615,115 L598,125 L560,128 L528,122 L510,108 L508,95 Z"/>
+    <path id="AF" class="country-land" data-name="AFGANİSTAN" onclick="handleMapClick('AF')"
+      d="M555,135 L578,130 L598,138 L605,152 L598,165 L578,170 L558,162 L548,148 Z"/>
+    <path id="PK" class="country-land" data-name="PAKİSTAN" onclick="handleMapClick('PK')"
+      d="M575,152 L600,148 L622,155 L628,175 L618,192 L598,198 L578,188 L568,172 Z"/>
+
+    <!-- ASYA -->
+    <path id="IN" class="country-land" data-name="HİNDİSTAN" onclick="handleMapClick('IN')"
+      d="M598,162 L625,155 L648,162 L658,182 L655,208 L638,228 L618,235 L598,225 L585,205 L582,182 Z"/>
+    <path id="CN" class="country-land" data-name="ÇİN" onclick="handleMapClick('CN')"
+      d="M625,72 L680,65 L720,72 L740,90 L742,115 L728,135 L700,148 L668,152 L638,145 L618,128 L615,105 L618,88 Z"/>
+    <path id="JP" class="country-land" data-name="JAPONYA" onclick="handleMapClick('JP')"
+      d="M752,95 L762,88 L772,95 L770,110 L758,118 L748,112 L748,100 Z"/>
+    <path id="KR" class="country-land" data-name="GÜNEY KORE" onclick="handleMapClick('KR')"
+      d="M730,105 L742,100 L750,108 L748,120 L738,125 L728,118 Z"/>
+    <path id="TH" class="country-land" data-name="TAYLAND" onclick="handleMapClick('TH')"
+      d="M668,175 L682,170 L692,180 L690,198 L678,205 L665,198 L660,185 Z"/>
+    <path id="ID" class="country-land" data-name="ENDONEZYA" onclick="handleMapClick('ID')"
+      d="M692,228 L715,222 L738,228 L745,242 L735,252 L712,255 L692,248 L685,238 Z"/>
+    <path id="MM" class="country-land" data-name="MYANMAR" onclick="handleMapClick('MM')"
+      d="M650,155 L665,150 L675,160 L672,178 L660,185 L648,178 L645,165 Z"/>
+    <path id="VN" class="country-land" data-name="VİETNAM" onclick="handleMapClick('VN')"
+      d="M680,168 L692,165 L700,178 L698,198 L688,205 L678,198 L676,182 Z"/>
+    <path id="MY" class="country-land" data-name="MALEZYA" onclick="handleMapClick('MY')"
+      d="M685,205 L700,200 L712,208 L710,220 L698,225 L685,218 Z"/>
+
+    <!-- OKYANUSYA -->
+    <path id="AU" class="country-land" data-name="AVUSTRALYA" onclick="handleMapClick('AU')"
+      d="M725,285 L772,278 L808,288 L818,315 L812,348 L790,368 L758,375 L728,362 L710,335 L708,308 Z"/>
+    <path id="NZ" class="country-land" data-name="YENİ ZELANDA" onclick="handleMapClick('NZ')"
+      d="M832,345 L840,338 L848,345 L845,360 L836,365 L828,358 Z"/>
+
+    <!-- ATTACK LINES GROUP -->
+    <g id="attackLines"></g>
+
+    <!-- COUNTRY LABELS & HP - rendered on top -->
+    <g id="countryLabels"></g>
+
+    <!-- TARGET LOCK -->
+    <g id="targetLock" display="none">
+      <circle id="tlCircle" cx="0" cy="0" r="18" fill="none" stroke="#e8162a" stroke-width="1.2" stroke-dasharray="5 3" opacity="0.9">
+        <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="2s" repeatCount="indefinite"/>
+      </circle>
+      <circle id="tlCircle2" cx="0" cy="0" r="10" fill="none" stroke="#e8162a" stroke-width="0.5" opacity="0.5"/>
+      <line id="tlH" x1="-22" y1="0" x2="22" y2="0" stroke="#e8162a" stroke-width="0.4" opacity="0.6"/>
+      <line id="tlV" x1="0" y1="-22" x2="0" y2="22" stroke="#e8162a" stroke-width="0.4" opacity="0.6"/>
+      <text id="tlLabel" x="0" y="-24" text-anchor="middle" fill="#e8162a" font-family="'Orbitron'" font-size="6" letter-spacing="2">HEDEF KİLİTLENDİ</text>
+    </g>
+
+    <!-- MY COUNTRY PULSE -->
+    <g id="myCountryPulse" display="none">
+      <circle id="mcCircle" cx="0" cy="0" r="15" fill="none" stroke="#00c853" stroke-width="0.8" opacity="0.7">
+        <animate attributeName="r" values="12;20;12" dur="2.5s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.8;0.2;0.8" dur="2.5s" repeatCount="indefinite"/>
+      </circle>
+    </g>
+  </svg>
+
+  <!-- Map bottom bar -->
+  <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(7,11,14,0.92);border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:5px 10px;z-index:10">
+    <span style="font-family:var(--mono);font-size:8px;color:var(--dim)">HARİTA: 49 ÜLKE</span>
+    <span class="gdot"></span><span style="font-family:var(--mono);font-size:8px;color:var(--green)">CANLI</span>
+    <div style="margin-left:auto;display:flex;gap:6px">
+      <button id="attackBtn" onclick="attackTarget()" disabled
+        style="padding:5px 18px;background:var(--red);color:white;font-family:var(--hud);font-size:9px;letter-spacing:2px;border:none;cursor:pointer;opacity:0.4;border-radius:1px;transition:all .15s">
+        ⚡ SALDIRI BAŞLAT
+      </button>
+      <button onclick="openModal('target')"
+        style="padding:5px 10px;background:var(--bg2);color:var(--dim);font-family:var(--hud);font-size:9px;letter-spacing:1px;border:1px solid var(--border);cursor:pointer;border-radius:1px">
+        HEDEF SEÇ ▾
+      </button>
     </div>
-    <div class="activity-list" id="activityList">
-      <div class="activity-item anim-new">
-        <div class="act-country"><span class="act-dot"></span>GERMANY</div>
-        <div class="act-detail">attacked by <span>FRANCE</span></div>
-        <div class="act-time">2m ago</div>
-      </div>
-      <div class="activity-item">
-        <div class="act-country"><span class="act-dot"></span>TURKEY</div>
-        <div class="act-detail">attacked by <span>GREECE</span></div>
-        <div class="act-time">3m ago</div>
-      </div>
-      <div class="activity-item">
-        <div class="act-country"><span class="act-dot"></span>USA</div>
-        <div class="act-detail">attacked by <span>CHINA</span></div>
-        <div class="act-time">5m ago</div>
-      </div>
-      <div class="activity-item">
-        <div class="act-country"><span class="act-dot"></span>RUSSIA</div>
-        <div class="act-detail">attacked by <span>UKRAINE</span></div>
-        <div class="act-time">8m ago</div>
-      </div>
-      <div class="activity-item">
-        <div class="act-country"><span class="act-dot"></span>JAPAN</div>
-        <div class="act-detail">attacked by <span>KOREA</span></div>
-        <div class="act-time">10m ago</div>
-      </div>
-    </div>
-    <button class="btn-view-all">VIEW ALL</button>
   </div>
 
-  <!-- MAP -->
-  <div style="grid-column:2;grid-row:1/3;position:relative;background:#080c10;overflow:hidden">
-    <!-- Grid overlay -->
-    <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.07;pointer-events:none">
-      <defs><pattern id="g" width="36" height="36" patternUnits="userSpaceOnUse">
-        <path d="M36 0L0 0 0 36" fill="none" stroke="#00c853" stroke-width="0.4"/>
-      </pattern></defs>
-      <rect width="100%" height="100%" fill="url(#g)"/>
+  <!-- Radar badge -->
+  <div style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.75);border:1px solid rgba(0,200,83,0.3);padding:5px 8px;z-index:10;text-align:center">
+    <div style="font-family:var(--hud);font-size:7px;color:var(--dim);letter-spacing:2px">RADAR SEVİYE 3</div>
+    <button style="margin-top:3px;padding:3px 8px;background:var(--green);color:#000;font-family:var(--hud);font-size:7px;border:none;cursor:pointer;width:100%">YÜKSELT</button>
+  </div>
+</div>
+
+<!-- COUNTRY OVERVIEW + AMMO (col 3) -->
+<div class="cell" style="grid-column:3;grid-row:1/3">
+  <div class="sh">ÜLKE GENEL BAKIŞI</div>
+  <div class="co-header">
+    <div style="display:flex;align-items:center;gap:7px">
+      <span style="font-size:20px" id="coFlag">🇹🇷</span>
+      <span style="font-family:var(--hud);font-size:13px;font-weight:700;color:white;letter-spacing:2px" id="coName">TÜRKİYE</span>
+    </div>
+    <div class="co-rank"><div style="font-size:6px;color:rgba(255,255,255,0.7);letter-spacing:1px">SIRA</div><div style="font-size:14px;font-weight:900" id="coRank">#5</div></div>
+  </div>
+  <div style="padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0">
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+      <span style="font-family:var(--hud);font-size:14px;color:white" id="coHP">78,500</span>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--dim);align-self:flex-end">/ 100,000</span>
+    </div>
+    <div class="hpb"><div class="hpf" id="coHPBar" style="width:78.5%"></div></div>
+    <div style="font-family:var(--mono);font-size:8px;color:var(--red);text-align:right;margin-top:2px" id="coHPPct">78.5%</div>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-cell"><div class="stat-label">Toplam Saldırı</div><div class="stat-val">1,246,789</div></div>
+    <div class="stat-cell"><div class="stat-label">Savunma</div><div class="stat-val">987,654</div></div>
+    <div class="stat-cell"><div class="stat-label">Katkı</div><div class="stat-val" id="myContrib">0</div></div>
+  </div>
+  <div class="boost-grid">
+    <div class="boost-card"><span class="boost-icon">⚔️</span><div class="boost-type">SALDIRI</div><div class="boost-val">+20%</div><div class="boost-timer">15d 32s</div></div>
+    <div class="boost-card"><span class="boost-icon">🛡️</span><div class="boost-type">SAVUNMA</div><div class="boost-val">+15%</div><div class="boost-timer">10d 11s</div></div>
+    <div class="boost-card"><span class="boost-icon">📡</span><div class="boost-type">RADAR</div><div class="boost-val">+25%</div><div class="boost-timer">8d 45s</div></div>
+    <div class="boost-card"><span class="boost-icon">🌿</span><div class="boost-type">KAYNAK</div><div class="boost-val">+10%</div><div class="boost-timer">20d 05s</div></div>
+  </div>
+  <div class="sh" style="flex-shrink:0">MERMİ SATIN AL</div>
+  <div style="flex:1;overflow-y:auto">
+    <div class="ammo-row"><span style="font-size:16px">🔹</span><div class="ammo-info"><div class="ammo-name">TEMEL CEPHANE</div><div class="ammo-sub">1,000 mermi</div></div><span class="ammo-price">0.01 ETH</span><button class="btn-sm btn-red" id="b1" onclick="buyAmmo(100)">SATIN AL</button></div>
+    <div class="ammo-row"><span style="font-size:16px">🔶</span><div class="ammo-info"><div class="ammo-name">GELİŞMİŞ CEPHANE</div><div class="ammo-sub">10,000 mermi</div></div><span class="ammo-price">0.08 ETH</span><button class="btn-sm btn-red" id="b2" onclick="buyAmmo(500)">SATIN AL</button></div>
+    <div class="ammo-row"><span style="font-size:16px">🔴</span><div class="ammo-info"><div class="ammo-name">PREMİUM CEPHANE</div><div class="ammo-sub">100,000 mermi</div></div><span class="ammo-price">0.75 ETH</span><button class="btn-sm btn-red" id="b3" onclick="buyAmmo(2000)">SATIN AL</button></div>
+    <div class="ammo-row"><span style="font-size:16px">💎</span><div class="ammo-info"><div class="ammo-name">EFSANEVİ CEPHANE</div><div class="ammo-sub">1,000,000 mermi</div></div><span class="ammo-price">5.00 ETH</span><button class="btn-sm btn-red" id="b4" onclick="buyAmmo(9999)">SATIN AL</button></div>
+  </div>
+</div>
+
+<!-- LEADERBOARD + STATS (col 4) -->
+<div class="cell" style="grid-column:4;grid-row:1/3">
+  <div class="sh">LİDERLİK TABLOSU</div>
+  <div class="lb-tabs">
+    <div class="lb-tab active" onclick="setLbTab('countries',this)">ÜLKELER</div>
+    <div class="lb-tab" onclick="setLbTab('players',this)">OYUNCULAR</div>
+  </div>
+  <div style="flex:1;overflow-y:auto" id="lbList">
+    <div class="lb-row"><span class="lb-num">1</span><span style="font-size:13px">🇷🇺</span><span class="lb-name">Rusya</span><span class="lb-hp">91.2K HP</span></div>
+    <div class="lb-row"><span class="lb-num">2</span><span style="font-size:13px">🇨🇳</span><span class="lb-name">Çin</span><span class="lb-hp">88.7K HP</span></div>
+    <div class="lb-row"><span class="lb-num">3</span><span style="font-size:13px">🇩🇪</span><span class="lb-name">Almanya</span><span class="lb-hp">83.1K HP</span></div>
+    <div class="lb-row"><span class="lb-num">4</span><span style="font-size:13px">🇧🇷</span><span class="lb-name">Brezilya</span><span class="lb-hp">79.9K HP</span></div>
+    <div class="lb-row me"><span class="lb-num">5</span><span style="font-size:13px">🇹🇷</span><span class="lb-name">Türkiye</span><span class="lb-hp">78.5K HP</span></div>
+    <div class="lb-row"><span class="lb-num">6</span><span style="font-size:13px">🇮🇳</span><span class="lb-name">Hindistan</span><span class="lb-hp">64.2K HP</span></div>
+    <div class="lb-row"><span class="lb-num">7</span><span style="font-size:13px">🇺🇸</span><span class="lb-name">ABD</span><span class="lb-hp">62.1K HP</span></div>
+    <div class="lb-row"><span class="lb-num">8</span><span style="font-size:13px">🇫🇷</span><span class="lb-name">Fransa</span><span class="lb-hp">58.7K HP</span></div>
+    <div class="lb-row"><span class="lb-num">9</span><span style="font-size:13px">🇯🇵</span><span class="lb-name">Japonya</span><span class="lb-hp">53.6K HP</span></div>
+    <div class="lb-row"><span class="lb-num">10</span><span style="font-size:13px">🇬🇧</span><span class="lb-name">Bir. Krallık</span><span class="lb-hp">50.4K HP</span></div>
+  </div>
+  <button class="btn-sm btn-out" style="margin:6px;width:calc(100%-12px)">TAM SIRALAMAYI GÖR</button>
+  <div class="sh" style="flex-shrink:0">İSTATİSTİKLERİN</div>
+  <div>
+    <div class="ys-row"><span class="ys-l">ÖLDÜRME</span><span class="ys-v red" id="ysKills">0</span></div>
+    <div class="ys-row"><span class="ys-l">ÖLÜM</span><span class="ys-v" id="ysDeaths">0</span></div>
+    <div class="ys-row"><span class="ys-l">KATKI PUANI</span><span class="ys-v green" id="ysScore">0</span></div>
+    <div class="ys-row"><span class="ys-l">RÜTBE</span><span class="ys-v">Komutan</span></div>
+    <div class="ys-row"><span class="ys-l">ÜLKE</span><span class="ys-v" id="ysCountry">— SEÇİLMEDİ —</span></div>
+  </div>
+</div>
+
+<!-- BOTTOM ROW -->
+<!-- Attack History -->
+<div class="cell" style="grid-column:1;grid-row:2">
+  <div class="sh">SALDIRI TARİHİ</div>
+  <div class="ah-head"><span>HEDEF</span><span>HASAR</span><span>ZAMAN</span></div>
+  <div style="flex:1;overflow-y:auto" id="attackHistory">
+    <div class="ah-row"><div style="display:flex;align-items:center;gap:4px;font-size:9px"><span>🇬🇷</span> YUNANİSTAN</div><div class="ah-dmg">-2,350 HP</div><div class="ah-time">2dk önce</div></div>
+    <div class="ah-row"><div style="display:flex;align-items:center;gap:4px;font-size:9px"><span>🇧🇬</span> BULGARİSTAN</div><div class="ah-dmg">-1,650 HP</div><div class="ah-time">5dk önce</div></div>
+    <div class="ah-row"><div style="display:flex;align-items:center;gap:4px;font-size:9px"><span>🇦🇲</span> ERMENİSTAN</div><div class="ah-dmg">-3,200 HP</div><div class="ah-time">10dk önce</div></div>
+    <div class="ah-row"><div style="display:flex;align-items:center;gap:4px;font-size:9px"><span>🇸🇾</span> SURİYE</div><div class="ah-dmg">-2,100 HP</div><div class="ah-time">20dk önce</div></div>
+  </div>
+  <button class="btn-sm btn-out" style="margin:5px 8px;width:calc(100% - 16px)">TÜM GEÇMİŞİ GÖRÜNTÜLE</button>
+</div>
+
+<!-- Alliance Chat -->
+<div class="cell" style="grid-column:2;grid-row:2">
+  <div class="sh">İTTİFAK SOHBETİ <span style="font-family:var(--mono);font-size:8px;color:var(--green)">🇹🇷 TÜRK İTTİFAKI &nbsp; 256 Çevrimiçi</span></div>
+  <div class="chat-body" id="chatBody">
+    <div class="chat-msg"><div class="chat-who"><span style="font-size:11px">🇹🇷</span><span class="chat-name">KomutanTR</span><span class="chat-t">2dk</span></div><div class="chat-txt">Herkes Yunanistan'a odaklanın!</div></div>
+    <div class="chat-msg"><div class="chat-who"><span style="font-size:11px">🇹🇷</span><span class="chat-name">General34</span><span class="chat-t">3dk</span></div><div class="chat-txt">Batı cephesinde daha fazla desteğe ihtiyaç var!</div></div>
+    <div class="chat-msg"><div class="chat-who"><span style="font-size:11px">🇹🇷</span><span class="chat-name">SavaşLord</span><span class="chat-t">5dk</span></div><div class="chat-txt">Gelişmiş cephane gönderiyorum.</div></div>
+  </div>
+  <div class="chat-input-row">
+    <input class="chat-inp" id="chatInput" placeholder="Mesaj yaz..." onkeydown="if(event.key==='Enter')sendChat()">
+    <button class="chat-send" onclick="sendChat()">➤</button>
+  </div>
+</div>
+
+<!-- Radar -->
+<div class="cell" style="grid-column:3;grid-row:2">
+  <div class="sh">RADAR SİSTEMİ</div>
+  <div class="radar-wrap">
+    <svg viewBox="0 0 120 120" style="width:105px;height:105px;flex-shrink:0">
+      <circle cx="60" cy="60" r="58" fill="#020e06" stroke="rgba(0,200,83,0.25)" stroke-width="1"/>
+      <circle cx="60" cy="60" r="40" fill="none" stroke="rgba(0,200,83,0.12)" stroke-width="0.5"/>
+      <circle cx="60" cy="60" r="22" fill="none" stroke="rgba(0,200,83,0.12)" stroke-width="0.5"/>
+      <line x1="60" y1="2" x2="60" y2="118" stroke="rgba(0,200,83,0.08)" stroke-width="0.5"/>
+      <line x1="2" y1="60" x2="118" y2="60" stroke="rgba(0,200,83,0.08)" stroke-width="0.5"/>
+      <g style="transform-origin:60px 60px;animation:radarSpin 3s linear infinite">
+        <path d="M60,60 L60,2 A58,58 0 0,1 116,78 Z" fill="rgba(0,200,83,0.1)"/>
+      </g>
+      <circle cx="38" cy="35" r="2.5" fill="#e8162a"><animate attributeName="opacity" values="1;0.1;1" dur="1.2s" repeatCount="indefinite"/></circle>
+      <circle cx="85" cy="72" r="2" fill="#f5c842"><animate attributeName="opacity" values="1;0.2;1" dur="1.8s" repeatCount="indefinite"/></circle>
+      <circle cx="45" cy="82" r="2" fill="#00c853"><animate attributeName="opacity" values="1;0.3;1" dur="2.2s" repeatCount="indefinite"/></circle>
+      <circle cx="90" cy="38" r="2.5" fill="#ff6b35"><animate attributeName="opacity" values="1;0.1;1" dur="1.5s" repeatCount="indefinite"/></circle>
+      <circle cx="60" cy="60" r="3" fill="#00c853"/>
     </svg>
-
-    <!-- Scan line -->
-    <div style="position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,200,83,0.3),transparent);animation:scanLine 4s linear infinite;pointer-events:none;z-index:2"></div>
-
-    <!-- World Map SVG -->
-    <svg id="worldMap" viewBox="0 0 900 500" preserveAspectRatio="xMidYMid meet"
-         style="position:absolute;inset:0;width:100%;height:100%">
-
-      <!-- Simplified continent shapes -->
-      <g opacity="0.25" fill="#1a2d1a" stroke="#00c853" stroke-width="0.8">
-        <!-- N America -->
-        <path d="M95,60 L185,45 L220,55 L240,80 L255,120 L250,170 L235,210 L215,240 L190,260 L170,270 L150,260 L130,230 L110,200 L90,160 L80,120 L85,85 Z"/>
-        <!-- S America -->
-        <path d="M185,275 L215,265 L240,280 L255,310 L260,355 L248,400 L230,430 L210,440 L192,430 L178,400 L170,360 L172,315 Z"/>
-        <!-- Europe -->
-        <path d="M368,55 L415,48 L445,58 L458,80 L455,108 L440,125 L415,130 L395,125 L375,110 L360,88 Z"/>
-        <!-- Africa -->
-        <path d="M370,140 L420,132 L452,145 L468,175 L472,220 L465,270 L450,315 L428,348 L405,360 L380,355 L358,330 L345,285 L342,235 L348,190 Z"/>
-        <!-- Asia -->
-        <path d="M462,38 L560,30 L660,35 L730,48 L775,65 L790,95 L785,130 L760,155 L720,170 L680,175 L640,168 L600,172 L565,185 L535,192 L505,188 L478,172 L458,148 L448,115 L450,78 Z"/>
-        <!-- Australia -->
-        <path d="M650,300 L705,292 L740,305 L758,335 L752,368 L728,388 L698,390 L668,375 L648,350 L642,320 Z"/>
-      </g>
-
-      <!-- Country nodes + labels -->
-      <g id="countryNodes">
-        <!-- USA -->
-        <g class="country-node" data-code="US" style="cursor:crosshair" onclick="selectTarget('US')">
-          <circle cx="148" cy="165" r="28" fill="rgba(232,22,42,0.08)" stroke="rgba(232,22,42,0.4)" stroke-width="1"/>
-          <circle cx="148" cy="165" r="5" fill="#e8162a" filter="url(#glow-red)"/>
-          <text x="148" y="148" text-anchor="middle" fill="#e8162a" font-family="'Orbitron'" font-size="9" font-weight="700">USA</text>
-          <text x="148" y="182" text-anchor="middle" fill="rgba(232,22,42,0.7)" font-family="'Share Tech Mono'" font-size="8">62.1K HP</text>
-        </g>
-        <!-- Canada -->
-        <g class="country-node" data-code="CA" style="cursor:crosshair" onclick="selectTarget('CA')">
-          <circle cx="148" cy="108" r="4" fill="#888" filter="url(#glow-dim)"/>
-          <text x="148" y="96" text-anchor="middle" fill="#999" font-family="'Orbitron'" font-size="8">CANADA</text>
-          <text x="148" y="120" text-anchor="middle" fill="#666" font-family="'Share Tech Mono'" font-size="7">65.3K HP</text>
-        </g>
-        <!-- Russia -->
-        <g class="country-node" data-code="RU" style="cursor:crosshair" onclick="selectTarget('RU')">
-          <circle cx="590" cy="95" r="30" fill="rgba(232,22,42,0.06)" stroke="rgba(232,22,42,0.3)" stroke-width="1"/>
-          <circle cx="590" cy="95" r="5" fill="#e8162a" filter="url(#glow-red)"/>
-          <text x="590" y="78" text-anchor="middle" fill="#e8162a" font-family="'Orbitron'" font-size="9" font-weight="700">RUSSIA</text>
-          <text x="590" y="112" text-anchor="middle" fill="rgba(232,22,42,0.7)" font-family="'Share Tech Mono'" font-size="8">91.2K HP</text>
-        </g>
-        <!-- China -->
-        <g class="country-node" data-code="CN" style="cursor:crosshair" onclick="selectTarget('CN')">
-          <circle cx="660" cy="165" r="26" fill="rgba(232,22,42,0.06)" stroke="rgba(232,22,42,0.3)" stroke-width="1"/>
-          <circle cx="660" cy="165" r="5" fill="#e8162a" filter="url(#glow-red)"/>
-          <text x="660" y="149" text-anchor="middle" fill="#e8162a" font-family="'Orbitron'" font-size="9" font-weight="700">CHINA</text>
-          <text x="660" y="182" text-anchor="middle" fill="rgba(232,22,42,0.7)" font-family="'Share Tech Mono'" font-size="8">88.7K HP</text>
-        </g>
-        <!-- Brazil -->
-        <g class="country-node" data-code="BR" style="cursor:crosshair" onclick="selectTarget('BR')">
-          <circle cx="222" cy="335" r="22" fill="rgba(232,22,42,0.06)" stroke="rgba(232,22,42,0.3)" stroke-width="1"/>
-          <circle cx="222" cy="335" r="4" fill="#e8162a" filter="url(#glow-red)"/>
-          <text x="222" y="320" text-anchor="middle" fill="#e8162a" font-family="'Orbitron'" font-size="8" font-weight="700">BRAZIL</text>
-          <text x="222" y="350" text-anchor="middle" fill="rgba(232,22,42,0.7)" font-family="'Share Tech Mono'" font-size="7">74.8K HP</text>
-        </g>
-        <!-- India -->
-        <g class="country-node" data-code="IN" style="cursor:crosshair" onclick="selectTarget('IN')">
-          <circle cx="570" cy="185" r="4" fill="#aaa" filter="url(#glow-dim)"/>
-          <text x="570" y="172" text-anchor="middle" fill="#aaa" font-family="'Orbitron'" font-size="8">INDIA</text>
-          <text x="570" y="200" text-anchor="middle" fill="#666" font-family="'Share Tech Mono'" font-size="7">54.2K HP</text>
-        </g>
-        <!-- Australia -->
-        <g class="country-node" data-code="AU" style="cursor:crosshair" onclick="selectTarget('AU')">
-          <circle cx="700" cy="350" r="4" fill="#888"/>
-          <text x="700" y="337" text-anchor="middle" fill="#999" font-family="'Orbitron'" font-size="8">AUSTRALIA</text>
-          <text x="700" y="364" text-anchor="middle" fill="#666" font-family="'Share Tech Mono'" font-size="7">49.3K HP</text>
-        </g>
-
-        <!-- Attack lines -->
-        <g opacity="0.6">
-          <line x1="415" y1="90" x2="148" y2="165" stroke="#e8162a" stroke-width="0.8" stroke-dasharray="4 4">
-            <animate attributeName="stroke-dashoffset" from="0" to="-100" dur="1.5s" repeatCount="indefinite"/>
-          </line>
-          <line x1="590" y1="95" x2="415" y2="90" stroke="#e8162a" stroke-width="0.8" stroke-dasharray="4 4">
-            <animate attributeName="stroke-dashoffset" from="0" to="-100" dur="2s" repeatCount="indefinite"/>
-          </line>
-          <line x1="660" y1="165" x2="570" y2="185" stroke="#e8162a" stroke-width="0.8" stroke-dasharray="3 3">
-            <animate attributeName="stroke-dashoffset" from="0" to="-80" dur="1.8s" repeatCount="indefinite"/>
-          </line>
-        </g>
-      </g>
-
-      <!-- My country (Turkey) - highlighted -->
-      <g id="myCountryNode">
-        <circle cx="450" cy="115" r="30" fill="rgba(0,200,83,0.08)" stroke="rgba(0,200,83,0.4)" stroke-width="1.5">
-          <animate attributeName="r" values="28;32;28" dur="2s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="1;0.6;1" dur="2s" repeatCount="indefinite"/>
-        </circle>
-        <circle cx="450" cy="115" r="6" fill="#00c853" filter="url(#glow-green)"/>
-        <text x="450" y="96" text-anchor="middle" fill="#00c853" font-family="'Orbitron'" font-size="9" font-weight="700">TURKEY</text>
-        <text x="450" y="133" text-anchor="middle" fill="rgba(0,200,83,0.8)" font-family="'Share Tech Mono'" font-size="8">78,500 HP</text>
-        <text x="450" y="145" text-anchor="middle" fill="rgba(0,200,83,0.5)" font-family="'Share Tech Mono'" font-size="7">◉ YOUR NATION</text>
-      </g>
-
-      <!-- Target lock indicator -->
-      <g id="targetLock" display="none">
-        <circle id="targetCircle" cx="0" cy="0" r="22" fill="none" stroke="#ff1a3c" stroke-width="1.5" stroke-dasharray="6 3">
-          <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="2s" repeatCount="indefinite"/>
-        </circle>
-        <text id="targetLabel" x="0" y="-26" text-anchor="middle" fill="#ff1a3c" font-family="'Orbitron'" font-size="7" letter-spacing="2">TARGET LOCKED</text>
-      </g>
-
-      <!-- Defs -->
-      <defs>
-        <filter id="glow-red"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-        <filter id="glow-green"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-        <filter id="glow-dim"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      </defs>
-    </svg>
-
-    <!-- Map bottom bar -->
-    <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(8,12,16,0.9);border-top:1px solid var(--border);display:flex;align-items:center;gap:16px;padding:6px 12px;z-index:5">
-      <span style="font-family:var(--mono);font-size:9px;color:var(--dim)">MAP: 90%</span>
-      <span style="font-family:var(--mono);font-size:9px;color:var(--green)">● LIVE</span>
-      <div style="display:flex;gap:8px;margin-left:auto">
-        <button onclick="attackTarget()" id="attackBtn"
-          style="padding:6px 16px;background:var(--red);color:white;font-family:var(--hud);font-size:9px;letter-spacing:2px;border:none;cursor:pointer;border-radius:1px;opacity:0.5" disabled>
-          ⚡ FIRE ATTACK
-        </button>
-        <button onclick="openCountryModal('target')"
-          style="padding:6px 12px;background:var(--bg2);color:var(--dim);font-family:var(--hud);font-size:9px;letter-spacing:1px;border:1px solid var(--border);cursor:pointer;border-radius:1px">
-          SELECT TARGET ▾
-        </button>
-      </div>
-    </div>
-
-    <!-- Radar level badge -->
-    <div style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.7);border:1px solid rgba(0,200,83,0.3);padding:6px 10px;z-index:5">
-      <div style="font-family:var(--hud);font-size:8px;color:var(--dim);letter-spacing:2px">RADAR LEVEL 3</div>
-      <button style="margin-top:4px;padding:4px 8px;background:var(--green);color:#000;font-family:var(--hud);font-size:8px;border:none;cursor:pointer;width:100%">UPGRADE</button>
+    <div style="flex:1;overflow-y:auto">
+      <div class="sl" style="margin-bottom:5px">TESPİT EDİLEN FAALİYET</div>
+      <div class="det-row"><span style="font-size:12px">🇬🇷</span><div><div class="det-country">YUNANİSTAN</div><div class="det-act massive">Büyük Saldırı</div></div><span style="font-size:7px;color:var(--dim);margin-left:auto">2dk</span></div>
+      <div class="det-row"><span style="font-size:12px">🇧🇬</span><div><div class="det-country">BULGARİSTAN</div><div class="det-act movement">Kuvvet Hareketi</div></div><span style="font-size:7px;color:var(--dim);margin-left:auto">5dk</span></div>
+      <div class="det-row"><span style="font-size:12px">🇺🇸</span><div><div class="det-country">ABD</div><div class="det-act alliance-m">İttifak Hareketi</div></div><span style="font-size:7px;color:var(--dim);margin-left:auto">7dk</span></div>
+      <div class="det-row"><span style="font-size:12px">🇷🇺</span><div><div class="det-country">RUSYA</div><div class="det-act nuclear">Nükleer Hazırlık</div></div><span style="font-size:7px;color:var(--dim);margin-left:auto">10dk</span></div>
+      <button class="btn-sm btn-out" style="margin-top:6px;width:100%">TARAMA YÜKSELTMELERİ</button>
     </div>
   </div>
+</div>
 
-  <!-- COUNTRY OVERVIEW + BUY AMMO -->
-  <div style="grid-column:3;grid-row:1/3;background:var(--bg1);display:flex;flex-direction:column;overflow:hidden">
-    <div class="section-header">COUNTRY OVERVIEW</div>
-
-    <!-- Flag + name -->
-    <div class="co-header">
-      <div class="co-flag-name">
-        <span class="co-flag">🇹🇷</span>
-        <span class="co-name">TURKEY</span>
-      </div>
-      <div class="co-rank">
-        <span class="rank-label">RANK</span>
-        <span class="rank-num">#5</span>
-      </div>
-    </div>
-
-    <!-- HP -->
-    <div class="hp-section">
-      <div class="hp-numbers">
-        <span class="hp-current">78,500</span>
-        <span class="hp-max">/ 100,000</span>
-      </div>
-      <div class="hp-bar"><div class="hp-fill" id="myHpBar" style="width:78.5%"></div></div>
-      <div class="hp-pct">78.5%</div>
-    </div>
-
-    <!-- Stats -->
-    <div class="co-stats">
-      <div class="co-stat">
-        <div class="co-stat-label">Total Attacks</div>
-        <div class="co-stat-val">1,246,789</div>
-      </div>
-      <div class="co-stat">
-        <div class="co-stat-label">Defenses</div>
-        <div class="co-stat-val">987,654</div>
-      </div>
-      <div class="co-stat">
-        <div class="co-stat-label">Contribution</div>
-        <div class="co-stat-val" id="myContrib">15,430</div>
-      </div>
-    </div>
-
-    <!-- Boosts -->
-    <div class="boosts-section">
-      <div class="sec-label">ACTIVE BOOSTS</div>
-      <div class="boosts-grid">
-        <div class="boost-card">
-          <span class="boost-icon">⚔️</span>
-          <div class="boost-type">ATTACK</div>
-          <div class="boost-val">+20%</div>
-          <div class="boost-timer">15m 32s</div>
-        </div>
-        <div class="boost-card">
-          <span class="boost-icon">🛡️</span>
-          <div class="boost-type">DEFENSE</div>
-          <div class="boost-val">+15%</div>
-          <div class="boost-timer">10m 11s</div>
-        </div>
-        <div class="boost-card">
-          <span class="boost-icon">📡</span>
-          <div class="boost-type">RADAR</div>
-          <div class="boost-val">+25%</div>
-          <div class="boost-timer">8m 45s</div>
-        </div>
-        <div class="boost-card">
-          <span class="boost-icon">🌿</span>
-          <div class="boost-type">RESOURCE</div>
-          <div class="boost-val">+10%</div>
-          <div class="boost-timer">20m 05s</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Buy Ammo -->
-    <div class="section-header">BUY AMMO</div>
-    <div class="ammo-section">
-      <div class="ammo-row">
-        <span class="ammo-icon">🔹</span>
-        <div class="ammo-info">
-          <div class="ammo-name">BASIC AMMO</div>
-          <div class="ammo-bullets">1,000 BULLETS</div>
-        </div>
-        <span class="ammo-price">0.01 ETH</span>
-        <button class="btn-buy" id="buyBtn1" onclick="buyAmmo(100)">BUY</button>
-      </div>
-      <div class="ammo-row">
-        <span class="ammo-icon">🔶</span>
-        <div class="ammo-info">
-          <div class="ammo-name">ADVANCED AMMO</div>
-          <div class="ammo-bullets">10,000 BULLETS</div>
-        </div>
-        <span class="ammo-price">0.08 ETH</span>
-        <button class="btn-buy" id="buyBtn2" onclick="buyAmmo(500)">BUY</button>
-      </div>
-      <div class="ammo-row">
-        <span class="ammo-icon">🔴</span>
-        <div class="ammo-info">
-          <div class="ammo-name">PREMIUM AMMO</div>
-          <div class="ammo-bullets">100,000 BULLETS</div>
-        </div>
-        <span class="ammo-price">0.75 ETH</span>
-        <button class="btn-buy" id="buyBtn3" onclick="buyAmmo(2000)">BUY</button>
-      </div>
-      <div class="ammo-row">
-        <span class="ammo-icon">💎</span>
-        <div class="ammo-info">
-          <div class="ammo-name">LEGENDARY AMMO</div>
-          <div class="ammo-bullets">1,000,000 BULLETS</div>
-        </div>
-        <span class="ammo-price">5.00 ETH</span>
-        <button class="btn-buy" id="buyBtn4" onclick="buyAmmo(9999)">BUY</button>
-      </div>
-    </div>
+<!-- Resource -->
+<div class="cell" style="grid-column:4;grid-row:2">
+  <div class="sh">KAYNAK KONTROLÜ <button class="btn-sm btn-out" style="font-size:7px;padding:2px 6px">TÜM BÖLGELERİ GÖR</button></div>
+  <div style="flex:1;overflow-y:auto;padding:10px 0">
+    <div class="res-row"><div class="res-hdr"><span class="res-name">🛢️ PETROL</span><span class="res-pct">72.5%</span></div><div class="res-bar"><div class="res-fill" style="width:72.5%;background:linear-gradient(90deg,#e8162a,#ff4500)"></div></div><div class="res-chg pos">+126%</div></div>
+    <div class="res-row"><div class="res-hdr"><span class="res-name">💧 GAZ</span><span class="res-pct">64.3%</span></div><div class="res-bar"><div class="res-fill" style="width:64.3%;background:linear-gradient(90deg,#e87016,#ffaa00)"></div></div><div class="res-chg pos">+56%</div></div>
+    <div class="res-row"><div class="res-hdr"><span class="res-name">⚙️ METAL</span><span class="res-pct">81.7%</span></div><div class="res-bar"><div class="res-fill" style="width:81.7%;background:linear-gradient(90deg,#888,#ccc)"></div></div><div class="res-chg pos">+150%</div></div>
+    <div class="res-row"><div class="res-hdr"><span class="res-name">💻 TEKNOLOJİ</span><span class="res-pct">55.2%</span></div><div class="res-bar"><div class="res-fill" style="width:55.2%;background:linear-gradient(90deg,#0066ff,#00aaff)"></div></div><div class="res-chg pos">+70%</div></div>
+    <div class="res-row"><div class="res-hdr"><span class="res-name">⚡ ENERJİ</span><span class="res-pct">88.1%</span></div><div class="res-bar"><div class="res-fill" style="width:88.1%;background:linear-gradient(90deg,#f5c842,#ffee00)"></div></div><div class="res-chg neg">-12%</div></div>
   </div>
+</div>
 
-  <!-- LEADERBOARD + YOUR STATS -->
-  <div style="grid-column:4;grid-row:1/3;background:var(--bg1);display:flex;flex-direction:column;overflow:hidden">
-    <div class="section-header">LEADERBOARD</div>
-    <div class="lb-tabs">
-      <div class="lb-tab active" onclick="setLbTab('countries',this)">COUNTRIES</div>
-      <div class="lb-tab" onclick="setLbTab('players',this)">PLAYERS</div>
-    </div>
-    <div class="lb-list" id="lbList">
-      <div class="lb-row"><span class="lb-num">1</span><span class="lb-flag">🇷🇺</span><span class="lb-name">RUSSIA</span><span class="lb-hp">91.2K HP</span></div>
-      <div class="lb-row"><span class="lb-num">2</span><span class="lb-flag">🇨🇳</span><span class="lb-name">CHINA</span><span class="lb-hp">88.7K HP</span></div>
-      <div class="lb-row"><span class="lb-num">3</span><span class="lb-flag">🇩🇪</span><span class="lb-name">GERMANY</span><span class="lb-hp">83.1K HP</span></div>
-      <div class="lb-row"><span class="lb-num">4</span><span class="lb-flag">🇧🇷</span><span class="lb-name">BRAZIL</span><span class="lb-hp">79.9K HP</span></div>
-      <div class="lb-row me"><span class="lb-num">5</span><span class="lb-flag">🇹🇷</span><span class="lb-name">TURKEY</span><span class="lb-hp">78.5K HP</span></div>
-      <div class="lb-row"><span class="lb-num">6</span><span class="lb-flag">🇮🇳</span><span class="lb-name">INDIA</span><span class="lb-hp">64.2K HP</span></div>
-      <div class="lb-row"><span class="lb-num">7</span><span class="lb-flag">🇺🇸</span><span class="lb-name">USA</span><span class="lb-hp">62.1K HP</span></div>
-      <div class="lb-row"><span class="lb-num">8</span><span class="lb-flag">🇫🇷</span><span class="lb-name">FRANCE</span><span class="lb-hp">58.7K HP</span></div>
-      <div class="lb-row"><span class="lb-num">9</span><span class="lb-flag">🇯🇵</span><span class="lb-name">JAPAN</span><span class="lb-hp">53.6K HP</span></div>
-      <div class="lb-row"><span class="lb-num">10</span><span class="lb-flag">🇬🇧</span><span class="lb-name">UK</span><span class="lb-hp">50.4K HP</span></div>
-    </div>
-    <button class="lb-view-all">VIEW FULL RANKING</button>
+</div><!-- end layout -->
 
-    <div class="section-header">YOUR STATS</div>
-    <div class="your-stats">
-      <div class="ys-row"><span class="ys-label">KILLS</span><span class="ys-val red" id="ysKills">2,451</span></div>
-      <div class="ys-row"><span class="ys-label">DEATHS</span><span class="ys-val" id="ysDeaths">612</span></div>
-      <div class="ys-row"><span class="ys-label">CONTRIBUTION SCORE</span><span class="ys-val green" id="ysScore">15,430</span></div>
-      <div class="ys-row"><span class="ys-label">RANK</span><span class="ys-val">Commander</span></div>
-      <div class="ys-row"><span class="ys-label">COUNTRY</span><span class="ys-val" id="ysCountry">— NOT SELECTED —</span></div>
-    </div>
-  </div>
-
-  <!-- BOTTOM ROW -->
-  <!-- Attack History -->
-  <div style="grid-column:1;grid-row:2;background:var(--bg1);display:flex;flex-direction:column;overflow:hidden">
-    <div class="section-header">ATTACK HISTORY</div>
-    <div class="ah-head"><span>TARGET</span><span>DAMAGE</span><span>TIME</span></div>
-    <div style="flex:1;overflow-y:auto" id="attackHistory">
-      <div class="ah-row anim-new"><div class="ah-target"><span>🇬🇷</span> GREECE</div><div class="ah-dmg">-2,350 HP</div><div class="ah-time">2m ago</div></div>
-      <div class="ah-row"><div class="ah-target"><span>🇧🇬</span> BULGARIA</div><div class="ah-dmg">-1,650 HP</div><div class="ah-time">5m ago</div></div>
-      <div class="ah-row"><div class="ah-target"><span>🇦🇲</span> ARMENIA</div><div class="ah-dmg">-3,200 HP</div><div class="ah-time">10m ago</div></div>
-      <div class="ah-row"><div class="ah-target"><span>🇨🇾</span> CYPRUS</div><div class="ah-dmg">-550 HP</div><div class="ah-time">15m ago</div></div>
-      <div class="ah-row"><div class="ah-target"><span>🇸🇾</span> SYRIA</div><div class="ah-dmg">-2,100 HP</div><div class="ah-time">20m ago</div></div>
-    </div>
-    <button class="lb-view-all">VIEW FULL HISTORY</button>
-  </div>
-
-  <!-- Alliance Chat -->
-  <div style="grid-column:2;grid-row:2;background:var(--bg1);display:flex;flex-direction:column;overflow:hidden">
-    <div class="section-header">
-      ALLIANCE CHAT
-      <span style="font-family:var(--mono);font-size:9px;color:var(--green)">🇹🇷 TURKISH ALLIANCE &nbsp; 256 Online</span>
-    </div>
-    <div class="chat-body" id="chatBody">
-      <div class="chat-msg">
-        <div class="chat-sender"><span class="chat-flag">🇹🇷</span><span class="chat-name">CommanderTR</span><span class="chat-time">2m ago</span></div>
-        <div class="chat-text">Everyone focus on Greece!</div>
-      </div>
-      <div class="chat-msg">
-        <div class="chat-sender"><span class="chat-flag">🇹🇷</span><span class="chat-name">General34</span><span class="chat-time">2m ago</span></div>
-        <div class="chat-text">We need more support on west!</div>
-      </div>
-      <div class="chat-msg">
-        <div class="chat-sender"><span class="chat-flag">🇹🇷</span><span class="chat-name">WarLord</span><span class="chat-time">4m ago</span></div>
-        <div class="chat-text">I'm sending advanced ammo.</div>
-      </div>
-      <div class="chat-msg">
-        <div class="chat-sender"><span class="chat-flag">🇹🇷</span><span class="chat-name">CommanderTR</span><span class="chat-time">5m ago</span></div>
-        <div class="chat-text">Good job team!</div>
-      </div>
-    </div>
-    <div class="chat-input-row">
-      <input class="chat-input" id="chatInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendChat()">
-      <button class="chat-send" onclick="sendChat()">➤</button>
-    </div>
-  </div>
-
-  <!-- Radar System -->
-  <div style="grid-column:3;grid-row:2;background:var(--bg1);display:flex;flex-direction:column;overflow:hidden">
-    <div class="section-header">RADAR SYSTEM</div>
-    <div class="radar-wrap">
-      <!-- Radar SVG -->
-      <div class="radar-canvas">
-        <svg class="radar-svg" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="58" fill="#020e06" stroke="rgba(0,200,83,0.3)" stroke-width="1"/>
-          <circle cx="60" cy="60" r="40" fill="none" stroke="rgba(0,200,83,0.15)" stroke-width="0.5"/>
-          <circle cx="60" cy="60" r="22" fill="none" stroke="rgba(0,200,83,0.15)" stroke-width="0.5"/>
-          <line x1="60" y1="2" x2="60" y2="118" stroke="rgba(0,200,83,0.1)" stroke-width="0.5"/>
-          <line x1="2" y1="60" x2="118" y2="60" stroke="rgba(0,200,83,0.1)" stroke-width="0.5"/>
-          <!-- Sweep -->
-          <g style="transform-origin:60px 60px;animation:radarSweep 3s linear infinite">
-            <path d="M60,60 L60,2 A58,58 0 0,1 116,78 Z" fill="rgba(0,200,83,0.12)"/>
-          </g>
-          <!-- Blips -->
-          <circle cx="38" cy="35" r="2.5" fill="#e8162a" opacity="0.9"><animate attributeName="opacity" values="1;0.2;1" dur="1.2s" repeatCount="indefinite"/></circle>
-          <circle cx="85" cy="72" r="2" fill="#f5c842" opacity="0.8"><animate attributeName="opacity" values="1;0.3;1" dur="1.8s" repeatCount="indefinite"/></circle>
-          <circle cx="45" cy="80" r="2" fill="#00c853" opacity="0.7"><animate attributeName="opacity" values="1;0.4;1" dur="2.1s" repeatCount="indefinite"/></circle>
-          <circle cx="90" cy="40" r="2.5" fill="#ff6b35" opacity="0.9"><animate attributeName="opacity" values="1;0.2;1" dur="1.5s" repeatCount="indefinite"/></circle>
-          <!-- Center -->
-          <circle cx="60" cy="60" r="3" fill="#00c853"/>
-        </svg>
-      </div>
-      <!-- Detected -->
-      <div class="radar-detected">
-        <div class="sec-label">DETECTED ACTIVITY</div>
-        <div class="det-row"><span class="det-flag">🇬🇷</span><div><div class="det-country">GREECE</div><div class="det-activity massive">Massive Attack</div></div><span class="det-time">2m ago</span></div>
-        <div class="det-row"><span class="det-flag">🇧🇬</span><div><div class="det-country">BULGARIA</div><div class="det-activity movement">Troop Movement</div></div><span class="det-time">5m ago</span></div>
-        <div class="det-row"><span class="det-flag">🇺🇸</span><div><div class="det-country">USA</div><div class="det-activity alliance-m">Alliance Movement</div></div><span class="det-time">7m ago</span></div>
-        <div class="det-row"><span class="det-flag">🇷🇺</span><div><div class="det-country">RUSSIA</div><div class="det-activity nuclear">Nuclear Ready</div></div><span class="det-time">10m ago</span></div>
-        <button class="lb-view-all" style="margin-top:8px">SCAN UPGRADES</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Resource Control -->
-  <div style="grid-column:4;grid-row:2;background:var(--bg1);display:flex;flex-direction:column;overflow:hidden">
-    <div class="section-header">
-      RESOURCE CONTROL
-      <button class="lb-view-all" style="margin:0;width:auto;padding:2px 8px;font-size:7px">VIEW ALL</button>
-    </div>
-    <div class="res-body">
-      <div class="res-row">
-        <div class="res-header">
-          <span class="res-name"><span class="res-icon">🛢️</span>OIL</span>
-          <span class="res-pct">72.5%</span>
-        </div>
-        <div class="res-bar"><div class="res-fill" style="width:72.5%;background:linear-gradient(90deg,#e8162a,#ff4500)"></div></div>
-        <div class="res-change pos">+126%</div>
-      </div>
-      <div class="res-row">
-        <div class="res-header">
-          <span class="res-name"><span class="res-icon">💧</span>GAS</span>
-          <span class="res-pct">64.3%</span>
-        </div>
-        <div class="res-bar"><div class="res-fill" style="width:64.3%;background:linear-gradient(90deg,#e87016,#ffaa00)"></div></div>
-        <div class="res-change pos">+56%</div>
-      </div>
-      <div class="res-row">
-        <div class="res-header">
-          <span class="res-name"><span class="res-icon">⚙️</span>METAL</span>
-          <span class="res-pct">81.7%</span>
-        </div>
-        <div class="res-bar"><div class="res-fill" style="width:81.7%;background:linear-gradient(90deg,#888,#ccc)"></div></div>
-        <div class="res-change pos">+150%</div>
-      </div>
-      <div class="res-row">
-        <div class="res-header">
-          <span class="res-name"><span class="res-icon">💻</span>TECH</span>
-          <span class="res-pct">55.2%</span>
-        </div>
-        <div class="res-bar"><div class="res-fill" style="width:55.2%;background:linear-gradient(90deg,#0066ff,#00aaff)"></div></div>
-        <div class="res-change pos">+70%</div>
-      </div>
-    </div>
-  </div>
-
-</div><!-- end main grid -->
-
-<!-- TICKER BAR -->
-<div class="ticker-bar">
-  <div class="ticker-label ticker-red">🔴 GLOBAL NEWS</div>
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-lbl">🔴 KÜRESEL HABERLER</div>
   <div class="ticker-scroll">
     <div class="ticker-inner" id="tickerInner">
-      <span class="ticker-item"><span>🔥</span> Turkey launched a massive offensive against Greece!</span>
-      <span class="ticker-item"><span>⚔️</span> USA alliance under attack from China!</span>
-      <span class="ticker-item"><span>📡</span> Russia nuclear activity detected near border!</span>
-      <span class="ticker-item"><span>🛰️</span> Brazil sector conflict rising — 74.8K HP remaining</span>
-      <span class="ticker-item"><span>⚠️</span> Germany defenses collapsing on northern border!</span>
-      <span class="ticker-item"><span>🤝</span> China and Russia signed a new alliance treaty!</span>
-      <span class="ticker-item"><span>🔥</span> Turkey launched a massive offensive against Greece!</span>
-      <span class="ticker-item"><span>⚔️</span> USA alliance under attack from China!</span>
-      <span class="ticker-item"><span>📡</span> Russia nuclear activity detected near border!</span>
-      <span class="ticker-item"><span>🛰️</span> Brazil sector conflict rising — 74.8K HP remaining</span>
+      <span><span style="color:var(--text)">🔥</span> Türkiye Yunanistan'a büyük saldırı başlattı!</span>
+      <span><span style="color:var(--text)">⚔️</span> ABD ittifakı Çin saldırısı altında!</span>
+      <span><span style="color:var(--text)">📡</span> Rusya nükleer faaliyeti tespit edildi!</span>
+      <span><span style="color:var(--text)">🛰️</span> Brezilya sektöründe çatışma artıyor — 74.8K HP kaldı</span>
+      <span><span style="color:var(--text)">⚠️</span> Almanya savunması kuzey sınırında çöküyor!</span>
+      <span><span style="color:var(--text)">🤝</span> Çin ve Rusya yeni ittifak anlaşması imzaladı!</span>
+      <span><span style="color:var(--text)">🔥</span> Türkiye Yunanistan'a büyük saldırı başlattı!</span>
+      <span><span style="color:var(--text)">⚔️</span> ABD ittifakı Çin saldırısı altında!</span>
+      <span><span style="color:var(--text)">📡</span> Rusya nükleer faaliyeti tespit edildi!</span>
+      <span><span style="color:var(--text)">🛰️</span> Brezilya sektöründe çatışma artıyor — 74.8K HP kaldı</span>
     </div>
   </div>
-  <div class="ticker-label ticker-warn" style="border-left:1px solid var(--border);border-right:none">
-    ⚠️ WAR ALERT &nbsp; <span style="color:var(--text)">USA alliance under attack!</span>
-  </div>
-  <div style="padding:0 12px;font-family:var(--mono);font-size:9px;color:var(--green)">
-    ONLINE: <span id="onlineCount">12,458</span>
-  </div>
-  <button class="btn-join" onclick="connectWallet()">JOIN THE WAR</button>
+  <div class="ticker-lbl ticker-warn" style="border-left:1px solid var(--border)">⚠️ SAVAŞ UYARISI &nbsp;<span style="color:var(--text)">ABD ittifakı saldırı altında!</span></div>
+  <div class="ticker-online">ÇEVRİMİÇİ: <span id="onlineCount">12,458</span></div>
+  <button class="btn-join" onclick="connectWallet()">SAVAŞA KATIL</button>
 </div>
 
-<!-- COUNTRY MODAL (dual mode: nation select OR target select) -->
+<!-- MODAL -->
 <div class="modal" id="countryModal">
   <div class="modal-box">
-    <button class="modal-close" onclick="closeModal()">✕ CLOSE</button>
-    <div class="modal-title" id="modalTitle">SELECT YOUR NATION</div>
-    <div style="font-family:var(--mono);font-size:10px;color:var(--dim);margin-bottom:12px" id="modalSub">
-      Bir kez seçtikten sonra ülken elenene kadar değiştiremezsin.
-    </div>
-    <div class="country-grid" id="countryGrid">
-      <button class="country-btn" onclick="modalAction('TR')">🇹🇷 Turkey</button>
-      <button class="country-btn" onclick="modalAction('US')">🇺🇸 USA</button>
-      <button class="country-btn" onclick="modalAction('RU')">🇷🇺 Russia</button>
-      <button class="country-btn" onclick="modalAction('CN')">🇨🇳 China</button>
-      <button class="country-btn" onclick="modalAction('DE')">🇩🇪 Germany</button>
-      <button class="country-btn" onclick="modalAction('FR')">🇫🇷 France</button>
-      <button class="country-btn" onclick="modalAction('GB')">🇬🇧 UK</button>
-      <button class="country-btn" onclick="modalAction('JP')">🇯🇵 Japan</button>
-      <button class="country-btn" onclick="modalAction('BR')">🇧🇷 Brazil</button>
-      <button class="country-btn" onclick="modalAction('IN')">🇮🇳 India</button>
-      <button class="country-btn" onclick="modalAction('KR')">🇰🇷 S.Korea</button>
-      <button class="country-btn" onclick="modalAction('UA')">🇺🇦 Ukraine</button>
+    <button class="modal-close" onclick="closeModal()">✕ KAPAT</button>
+    <div class="modal-title" id="modalTitle">ÜLKE SEÇ</div>
+    <div class="modal-sub" id="modalSub">Haritadan hedef seç veya listeden tıkla</div>
+    <div class="c-grid" id="cGrid">
+      <button class="c-btn" onclick="modalAction('TR')">🇹🇷 TR</button>
+      <button class="c-btn" onclick="modalAction('US')">🇺🇸 ABD</button>
+      <button class="c-btn" onclick="modalAction('RU')">🇷🇺 RU</button>
+      <button class="c-btn" onclick="modalAction('CN')">🇨🇳 ÇİN</button>
+      <button class="c-btn" onclick="modalAction('DE')">🇩🇪 DE</button>
+      <button class="c-btn" onclick="modalAction('FR')">🇫🇷 FR</button>
+      <button class="c-btn" onclick="modalAction('GB')">🇬🇧 GB</button>
+      <button class="c-btn" onclick="modalAction('JP')">🇯🇵 JP</button>
+      <button class="c-btn" onclick="modalAction('BR')">🇧🇷 BR</button>
+      <button class="c-btn" onclick="modalAction('IN')">🇮🇳 IN</button>
+      <button class="c-btn" onclick="modalAction('KR')">🇰🇷 KR</button>
+      <button class="c-btn" onclick="modalAction('UA')">🇺🇦 UA</button>
+      <button class="c-btn" onclick="modalAction('IT')">🇮🇹 IT</button>
+      <button class="c-btn" onclick="modalAction('ES')">🇪🇸 ES</button>
+      <button class="c-btn" onclick="modalAction('PL')">🇵🇱 PL</button>
+      <button class="c-btn" onclick="modalAction('SA')">🇸🇦 SA</button>
+      <button class="c-btn" onclick="modalAction('IR')">🇮🇷 IR</button>
+      <button class="c-btn" onclick="modalAction('AR')">🇦🇷 AR</button>
+      <button class="c-btn" onclick="modalAction('ZA')">🇿🇦 ZA</button>
+      <button class="c-btn" onclick="modalAction('NG')">🇳🇬 NG</button>
+      <button class="c-btn" onclick="modalAction('EG')">🇪🇬 EG</button>
+      <button class="c-btn" onclick="modalAction('AU')">🇦🇺 AU</button>
+      <button class="c-btn" onclick="modalAction('ID')">🇮🇩 ID</button>
+      <button class="c-btn" onclick="modalAction('MX')">🇲🇽 MX</button>
     </div>
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
-
-<style>
-@keyframes scanLine{0%{top:-1px}100%{top:100%}}
-</style>
 
 <script>
 const API = 'https://abswar-clean-backend-production.up.railway.app';
-const FLAGS = {TR:'🇹🇷',US:'🇺🇸',RU:'🇷🇺',CN:'🇨🇳',DE:'🇩🇪',FR:'🇫🇷',GB:'🇬🇧',JP:'🇯🇵',BR:'🇧🇷',IN:'🇮🇳',KR:'🇰🇷',UA:'🇺🇦',GR:'🇬🇷',BG:'🇧🇬',AM:'🇦🇲',CY:'🇨🇾',SY:'🇸🇾',CA:'🇨🇦',AU:'🇦🇺'};
-const NAMES = {TR:'Turkey',US:'USA',RU:'Russia',CN:'China',DE:'Germany',FR:'France',GB:'UK',JP:'Japan',BR:'Brazil',IN:'India',KR:'S.Korea',UA:'Ukraine'};
-const TARGET_POS = {US:{cx:148,cy:165},RU:{cx:590,cy:95},CN:{cx:660,cy:165},BR:{cx:222,cy:335},IN:{cx:570,cy:185},DE:{cx:400,cy:80},FR:{cx:390,cy:90},GB:{cx:375,cy:72},JP:{cx:730,cy:155},KR:{cx:715,cy:160},UA:{cx:460,cy:88}};
 
-let wallet = null, myCountry = null, targetCountry = null;
-let cooldown = 0, cooldownTimer = null, toastTimer = null;
-let gameCountries = [];
+// Country data: code -> {name, flag, cx, cy (SVG centroid)}
+const CD = {
+  US:{n:'ABD',f:'🇺🇸',x:168,y:138},CA:{n:'Kanada',f:'🇨🇦',x:155,y:55},MX:{n:'Meksika',f:'🇲🇽',x:140,y:210},
+  BR:{n:'Brezilya',f:'🇧🇷',x:222,y:305},AR:{n:'Arjantin',f:'🇦🇷',x:200,y:392},CO:{n:'Kolombiya',f:'🇨🇴',x:165,y:252},VE:{n:'Venezuela',f:'🇻🇪',x:190,y:248},
+  GB:{n:'Bir.Krallık',f:'🇬🇧',x:346,y:85},FR:{n:'Fransa',f:'🇫🇷',x:365,y:112},DE:{n:'Almanya',f:'🇩🇪',x:382,y:95},
+  ES:{n:'İspanya',f:'🇪🇸',x:344,y:132},IT:{n:'İtalya',f:'🇮🇹',x:380,y:138},PL:{n:'Polonya',f:'🇵🇱',x:400,y:90},
+  UA:{n:'Ukrayna',f:'🇺🇦',x:428,y:102},RO:{n:'Romanya',f:'🇷🇴',x:418,y:122},NL:{n:'Hollanda',f:'🇳🇱',x:363,y:83},
+  SE:{n:'İsveç',f:'🇸🇪',x:385,y:55},NO:{n:'Norveç',f:'🇳🇴',x:372,y:42},GR:{n:'Yunanistan',f:'🇬🇷',x:402,y:148},
+  TR:{n:'Türkiye',f:'🇹🇷',x:472,y:135},SY:{n:'Suriye',f:'🇸🇾',x:482,y:162},IQ:{n:'Irak',f:'🇮🇶',x:502,y:172},
+  IR:{n:'İran',f:'🇮🇷',x:532,y:162},SA:{n:'Suudi Arabistan',f:'🇸🇦',x:498,y:200},IL:{n:'İsrail',f:'🇮🇱',x:458,y:168},AE:{n:'BAE',f:'🇦🇪',x:535,y:200},
+  EG:{n:'Mısır',f:'🇪🇬',x:446,y:172},NG:{n:'Nijerya',f:'🇳🇬',x:378,y:238},ET:{n:'Etiyopya',f:'🇪🇹',x:462,y:235},
+  ZA:{n:'Güney Afrika',f:'🇿🇦',x:415,y:335},KE:{n:'Kenya',f:'🇰🇪',x:462,y:268},CD:{n:'Kongo',f:'🇨🇩',x:422,y:278},
+  DZ:{n:'Cezayir',f:'🇩🇿',x:362,y:180},MA:{n:'Fas',f:'🇲🇦',x:330,y:168},
+  RU:{n:'Rusya',f:'🇷🇺',x:588,y:48},KZ:{n:'Kazakistan',f:'🇰🇿',x:562,y:102},AF:{n:'Afganistan',f:'🇦🇫',x:575,y:150},PK:{n:'Pakistan',f:'🇵🇰',x:598,y:172},
+  IN:{n:'Hindistan',f:'🇮🇳',x:622,y:195},CN:{n:'Çin',f:'🇨🇳',x:678,y:108},JP:{n:'Japonya',f:'🇯🇵',x:758,y:104},
+  KR:{n:'Güney Kore',f:'🇰🇷',x:737,y:113},TH:{n:'Tayland',f:'🇹🇭',x:676,y:188},ID:{n:'Endonezya',f:'🇮🇩',x:714,y:238},
+  MM:{n:'Myanmar',f:'🇲🇲',x:658,y:168},VN:{n:'Vietnam',f:'🇻🇳',x:688,y:185},MY:{n:'Malezya',f:'🇲🇾',x:695,y:212},
+  AU:{n:'Avustralya',f:'🇦🇺',x:758,y:328},NZ:{n:'Yeni Zelanda',f:'🇳🇿',x:836,y:352}
+};
+
+let wallet=null, myCountry=null, targetCountry=null, cooldown=0, cdTimer=null, toastTimer=null, modalMode='nation';
+let gameCountries=[], attackLineTimer=null;
+
+/* ── RENDER COUNTRY LABELS ── */
+function renderLabels() {
+  const g = document.getElementById('countryLabels');
+  g.innerHTML = '';
+  Object.entries(CD).forEach(([code, c]) => {
+    const country = gameCountries.find(x=>x.code===code);
+    const hp = country ? country.hp : 100000;
+    const alive = country ? country.is_alive !== false : true;
+    if (!alive) return;
+    const isMe = code === myCountry;
+    const isTgt = code === targetCountry;
+    const color = isMe ? '#00c853' : isTgt ? '#e8162a' : '#b8ccd8';
+    const r = isMe || isTgt ? 5 : 3.5;
+
+    const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx', c.x); dot.setAttribute('cy', c.y); dot.setAttribute('r', r);
+    dot.setAttribute('fill', color);
+    dot.setAttribute('class', 'city-dot' + (isMe ? ' my-city' : isTgt ? ' target-city' : ''));
+    dot.setAttribute('filter', isMe || isTgt ? (isMe ? 'url(#gG)' : 'url(#gR)') : '');
+    dot.setAttribute('onclick', `handleMapClick('${code}')`);
+    dot.style.cursor = 'crosshair';
+    g.appendChild(dot);
+
+    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x', c.x); txt.setAttribute('y', c.y - r - 3);
+    txt.setAttribute('text-anchor','middle');
+    txt.setAttribute('class','city-label');
+    txt.setAttribute('fill', color);
+    txt.setAttribute('font-size', isMe || isTgt ? '7.5' : '6.5');
+    txt.setAttribute('font-weight', isMe || isTgt ? '700' : '400');
+    txt.textContent = c.f + ' ' + code;
+    g.appendChild(txt);
+
+    if (isMe || isTgt) {
+      const hpTxt = document.createElementNS('http://www.w3.org/2000/svg','text');
+      hpTxt.setAttribute('x', c.x); hpTxt.setAttribute('y', c.y + r + 9);
+      hpTxt.setAttribute('text-anchor','middle');
+      hpTxt.setAttribute('class','hp-label');
+      hpTxt.setAttribute('fill', isMe ? 'rgba(0,200,83,0.7)' : 'rgba(232,22,42,0.7)');
+      hpTxt.textContent = hp.toLocaleString('tr-TR') + ' HP';
+      g.appendChild(hpTxt);
+    }
+
+    // Highlight SVG path
+    const el = document.getElementById(code);
+    if (el) {
+      el.className.baseVal = 'country-land' + (isMe ? ' my-country' : isTgt ? ' targeted' : '');
+    }
+  });
+}
+
+/* ── MAP CLICK ── */
+function handleMapClick(code) {
+  if (!wallet) { showToast('Önce wallet bağla!', 'error'); return; }
+  if (!myCountry) { openModal('nation'); return; }
+  if (code === myCountry) { showToast('Kendi ülkene saldıramazsın!', 'error'); return; }
+  selectTarget(code);
+}
+
+/* ── SELECT TARGET ── */
+function selectTarget(code) {
+  if (code === myCountry) { showToast('Kendi ülkene saldıramazsın!','error'); return; }
+  const prev = targetCountry;
+  targetCountry = code;
+
+  // Reset prev target styling
+  if (prev) {
+    const el = document.getElementById(prev);
+    if (el) el.className.baseVal = 'country-land';
+  }
+
+  const lock = document.getElementById('targetLock');
+  const c = CD[code];
+  if (c && lock) {
+    lock.setAttribute('display','block');
+    lock.setAttribute('transform',`translate(${c.x},${c.y})`);
+    document.getElementById('tlCircle').setAttribute('cx',0);
+    document.getElementById('tlCircle').setAttribute('cy',0);
+  }
+
+  const btn = document.getElementById('attackBtn');
+  btn.disabled = cooldown > 0;
+  btn.style.opacity = cooldown > 0 ? '0.4' : '1';
+  btn.textContent = cooldown > 0 ? `COOLDOWN ${cooldown}s` : `⚡ ${code} SALDIRI BAŞLAT`;
+
+  renderLabels();
+  showToast(`🎯 ${CD[code]?.f||''} ${CD[code]?.n||code} hedef kilitlendi`, 'info');
+}
+
+/* ── ATTACK LINE ANIMATION ── */
+function drawAttackLine(fromCode, toCode) {
+  const from = CD[fromCode], to = CD[toCode];
+  if (!from || !to) return;
+  const g = document.getElementById('attackLines');
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',from.x); line.setAttribute('y1',from.y);
+  line.setAttribute('x2',to.x);   line.setAttribute('y2',to.y);
+  line.setAttribute('stroke','#e8162a'); line.setAttribute('stroke-width','0.8');
+  line.setAttribute('stroke-dasharray','4 3'); line.setAttribute('opacity','0.7');
+  const anim = document.createElementNS('http://www.w3.org/2000/svg','animate');
+  anim.setAttribute('attributeName','stroke-dashoffset');
+  anim.setAttribute('from','0'); anim.setAttribute('to','-100');
+  anim.setAttribute('dur','0.8s'); anim.setAttribute('repeatCount','3');
+  line.appendChild(anim);
+  g.appendChild(line);
+  setTimeout(() => { try { g.removeChild(line); } catch(e){} }, 2500);
+}
 
 /* ── WALLET ── */
 async function connectWallet() {
-  if (!window.ethereum) { showToast('MetaMask bulunamadı! metamask.io adresinden kur.', 'error'); return; }
+  if (!window.ethereum) { showToast('MetaMask bulunamadı! metamask.io kurulu olmalı.','error'); return; }
   try {
-    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+    const accounts = await ethereum.request({method:'eth_requestAccounts'});
     wallet = accounts[0];
-    document.getElementById('walletBtn').textContent = wallet.slice(0,6)+'...'+wallet.slice(-4);
-    document.getElementById('walletBtn').className = 'btn-wallet connected';
-    document.getElementById('ethBal').textContent = wallet.slice(0,6)+'...';
+    const btn = document.getElementById('walletBtn');
+    btn.textContent = wallet.slice(0,6)+'...'+wallet.slice(-4);
+    btn.className = 'btn-wallet connected';
     await registerPlayer();
-  } catch(e) { showToast('Bağlantı iptal edildi.', 'error'); }
+  } catch(e) { showToast('Bağlantı iptal edildi.','error'); }
 }
 
 async function registerPlayer() {
   try {
-    const res = await fetch(API+'/api/player/connect', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({wallet})
-    });
+    const res = await fetch(API+'/api/player/connect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({wallet})});
     const data = await res.json();
     const p = data.player || data;
     const cc = p.countryCode || p.country_code;
     if (cc) {
       myCountry = cc;
       applyMyCountry(cc);
-      showToast('Hoş geldin Commander! Ülken: ' + (FLAGS[cc]||'') + ' ' + cc, 'success');
+      showToast('Hoş geldin Komutan! '+( CD[cc]?.f||'')+' '+cc,'success');
     } else {
-      showToast('Wallet bağlandı! Şimdi ülke seç.', 'success');
-      setTimeout(() => openCountryModal('nation'), 800);
+      showToast('Wallet bağlandı! Ülke seçin.','success');
+      setTimeout(()=>openModal('nation'),700);
     }
     if (p.contribution) {
-      document.getElementById('myContrib').textContent = Number(p.contribution).toLocaleString();
-      document.getElementById('ysScore').textContent = Number(p.contribution).toLocaleString();
+      document.getElementById('myContrib').textContent = (+p.contribution).toLocaleString('tr-TR');
+      document.getElementById('ysScore').textContent   = (+p.contribution).toLocaleString('tr-TR');
+      document.getElementById('ysKills').textContent   = (+p.contribution).toLocaleString('tr-TR');
     }
-  } catch(e) { showToast('Sunucuya bağlanılamadı.', 'error'); }
+  } catch(e) { showToast('Sunucuya bağlanılamadı.','error'); }
 }
 
 /* ── CHOOSE COUNTRY ── */
 async function chooseCountry(code) {
-  if (!wallet) { showToast('Önce wallet bağla!', 'error'); return; }
-  closeModal();
+  if (!wallet) { showToast('Önce wallet bağla!','error'); return; }
   try {
-    const res = await fetch(API+'/api/player/choose-country', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({wallet, countryCode: code})
-    });
+    const res = await fetch(API+'/api/player/choose-country',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({wallet,countryCode:code})});
     const data = await res.json();
-    if (data.error) { showToast(data.error, 'error'); return; }
+    if (data.error) { showToast(data.error,'error'); return; }
     myCountry = code;
     applyMyCountry(code);
-    showToast('Ülke seçildi: ' + (FLAGS[code]||'') + ' ' + code, 'success');
-  } catch(e) { showToast('Ülke seçilemedi.', 'error'); }
+    showToast('Ülke seçildi: '+(CD[code]?.f||'')+' '+(CD[code]?.n||code),'success');
+  } catch(e) { showToast('Ülke seçilemedi.','error'); }
 }
 
 function applyMyCountry(code) {
-  const flag = FLAGS[code] || '🏳️';
-  const coFlag = document.querySelector('.co-flag');
-  const coName = document.querySelector('.co-name');
-  if (coFlag) coFlag.textContent = flag;
-  if (coName) coName.textContent = code;
-  const ysCountry = document.getElementById('ysCountry');
-  if (ysCountry) ysCountry.textContent = flag + ' ' + code;
-}
+  const c = CD[code];
+  document.getElementById('coFlag').textContent = c?.f||'🏳️';
+  document.getElementById('coName').textContent = c?.n||code;
+  document.getElementById('ysCountry').textContent = (c?.f||'')+ ' ' +(c?.n||code);
 
-/* ── SELECT TARGET ── */
-function selectTarget(code) {
-  if (code === myCountry) { showToast('Kendi ülkene saldıramazsın!', 'error'); return; }
-  targetCountry = code;
-  const lock = document.getElementById('targetLock');
-  const pos = TARGET_POS[code];
-  if (pos && lock) {
-    lock.setAttribute('display','block');
-    lock.setAttribute('transform', `translate(${pos.cx},${pos.cy})`);
+  // My country pulse
+  const pulse = document.getElementById('myCountryPulse');
+  if (c && pulse) {
+    pulse.setAttribute('display','block');
+    pulse.setAttribute('transform',`translate(${c.x},${c.y})`);
+    document.getElementById('mcCircle').setAttribute('cx',0);
+    document.getElementById('mcCircle').setAttribute('cy',0);
   }
-  const btn = document.getElementById('attackBtn');
-  btn.disabled = (cooldown > 0);
-  btn.style.opacity = cooldown > 0 ? '0.5' : '1';
-  btn.textContent = cooldown > 0 ? `COOLDOWN ${cooldown}s` : `⚡ ATTACK ${code}`;
-  const c = gameCountries.find(x => x.code === code);
-  showToast(`🎯 ${FLAGS[code]||''} ${code}${c ? ' — '+Number(c.hp).toLocaleString()+' HP' : ''}`, 'info');
+  renderLabels();
 }
 
 /* ── ATTACK ── */
 async function attackTarget() {
-  if (!wallet)        { showToast('Önce wallet bağla!', 'error'); return; }
-  if (!myCountry)     { showToast('Önce ülke seç!', 'error'); openCountryModal(); return; }
-  if (!targetCountry) { showToast('Haritadan hedef seç!', 'error'); return; }
-  if (cooldown > 0)   { showToast(`Cooldown: ${cooldown}s`, 'error'); return; }
-
+  if (!wallet)        { showToast('Önce wallet bağla!','error'); return; }
+  if (!myCountry)     { showToast('Önce ülke seç!','error'); openModal('nation'); return; }
+  if (!targetCountry) { showToast('Haritadan hedef seç!','error'); return; }
+  if (cooldown > 0)   { showToast(`Cooldown: ${cooldown}s`,'error'); return; }
   const btn = document.getElementById('attackBtn');
-  btn.disabled = true; btn.textContent = '🔴 FIRING...';
-
+  btn.disabled = true; btn.textContent='🔴 ATIYOR...';
   try {
-    const res = await fetch(API+'/api/game/attack', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({wallet, targetCountry})
-    });
+    const res = await fetch(API+'/api/game/attack',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({wallet,targetCountry})});
     const data = await res.json();
     if (data.error) {
-      showToast(data.error, 'error');
-      btn.disabled = false; btn.textContent = `⚡ ATTACK ${targetCountry}`;
+      showToast(data.error,'error');
+      btn.disabled=false; btn.textContent=`⚡ ${targetCountry} SALDIRI BAŞLAT`;
     } else {
-      const dmg = data.damage || 1;
-      showToast(`⚡ ${FLAGS[targetCountry]||''} ${targetCountry} HIT! -${dmg} HP`, 'success');
+      const dmg = data.damage||1;
+      showToast(`⚡ ${CD[targetCountry]?.f||''} ${targetCountry} vuruldu! -${dmg} HP`,'success');
       addAttackHistory(targetCountry, dmg);
-      addActivityItem(myCountry, targetCountry);
-      if (data.newHp !== undefined) updateCountryHP(targetCountry, data.newHp);
-      startCooldown(data.cooldown || 10);
-      const cur = parseInt(document.getElementById('myContrib').textContent.replace(/,/g,''))||0;
-      document.getElementById('myContrib').textContent = (cur+1).toLocaleString();
-      document.getElementById('ysScore').textContent = (cur+1).toLocaleString();
+      addActivity(myCountry, targetCountry);
+      drawAttackLine(myCountry, targetCountry);
+      if (data.newHp !== undefined) updateHP(targetCountry, data.newHp);
+      startCooldown(data.cooldown||10);
+      const cur = parseInt(document.getElementById('myContrib').textContent.replace(/\D/g,''))||0;
+      const nxt = (cur+1).toLocaleString('tr-TR');
+      document.getElementById('myContrib').textContent = nxt;
+      document.getElementById('ysScore').textContent   = nxt;
+      document.getElementById('ysKills').textContent   = nxt;
+      pollState();
     }
   } catch(e) {
-    showToast('Saldırı başarısız.', 'error');
-    btn.disabled = false; btn.textContent = `⚡ ATTACK ${targetCountry}`;
+    showToast('Saldırı başarısız.','error');
+    btn.disabled=false; btn.textContent=`⚡ ${targetCountry} SALDIRI BAŞLAT`;
   }
 }
 
-function updateCountryHP(code, hp) {
-  const c = gameCountries.find(x => x.code === code);
-  if (c) c.hp = hp;
-  document.querySelectorAll(`[data-code="${code}"] text`).forEach(n => {
-    if (n.textContent.includes('HP')) n.textContent = `${(hp/1000).toFixed(1)}K HP`;
-  });
+function updateHP(code, hp) {
+  const idx = gameCountries.findIndex(x=>x.code===code);
+  if (idx>=0) gameCountries[idx].hp = hp;
+  if (code === myCountry) {
+    const pct = Math.max(0,(hp/100000*100));
+    document.getElementById('coHP').textContent = hp.toLocaleString('tr-TR');
+    document.getElementById('coHPBar').style.width = pct+'%';
+    document.getElementById('coHPPct').textContent = pct.toFixed(1)+'%';
+  }
+  renderLabels();
 }
 
 function addAttackHistory(code, dmg) {
+  const c = CD[code];
   const row = document.createElement('div');
-  row.className = 'ah-row anim-new';
-  row.innerHTML = `<div class="ah-target"><span>${FLAGS[code]||'🏳️'}</span> ${code}</div><div class="ah-dmg">-${dmg||1} HP</div><div class="ah-time">just now</div>`;
+  row.className='ah-row anim-new';
+  row.innerHTML=`<div style="display:flex;align-items:center;gap:4px;font-size:9px"><span>${c?.f||'🏳️'}</span> ${c?.n||code}</div><div class="ah-dmg">-${dmg||1} HP</div><div class="ah-time">şimdi</div>`;
   const hist = document.getElementById('attackHistory');
-  hist.insertBefore(row, hist.firstChild);
-  if (hist.children.length > 20) hist.removeChild(hist.lastChild);
+  hist.insertBefore(row,hist.firstChild);
+  if (hist.children.length>20) hist.removeChild(hist.lastChild);
 }
 
-function addActivityItem(from, to) {
+function addActivity(from, to) {
+  const fc=CD[from], tc=CD[to];
   const item = document.createElement('div');
-  item.className = 'activity-item anim-new';
-  item.innerHTML = `<div class="act-country"><span class="act-dot"></span>${FLAGS[to]||''} ${to}</div><div class="act-detail">attacked by <span>${FLAGS[from]||''} ${from}</span></div><div class="act-time">just now</div>`;
+  item.className='act-item anim-new';
+  item.innerHTML=`<div class="act-country"><span class="ldot" style="width:4px;height:4px;margin-right:5px"></span>${tc?.f||''} ${tc?.n||to}</div><div class="act-detail">saldırdı: <b>${fc?.f||''} ${fc?.n||from}</b></div><div class="act-time">şimdi</div>`;
   const list = document.getElementById('activityList');
-  list.insertBefore(item, list.firstChild);
-  if (list.children.length > 10) list.removeChild(list.lastChild);
+  list.insertBefore(item,list.firstChild);
+  if (list.children.length>12) list.removeChild(list.lastChild);
 }
 
 function startCooldown(secs) {
   cooldown = secs;
-  clearInterval(cooldownTimer);
+  clearInterval(cdTimer);
   const btn = document.getElementById('attackBtn');
-  btn.disabled = true;
-  let bar = document.getElementById('cooldownBar');
-  if (!bar) {
-    bar = document.createElement('div');
-    bar.id = 'cooldownBar';
-    bar.style.cssText = 'height:2px;background:var(--red);transition:width 1s linear;width:100%;margin-top:4px';
-    btn.insertAdjacentElement('afterend', bar);
-  }
-  bar.style.width = '100%';
-  const total = secs;
-  cooldownTimer = setInterval(() => {
+  cdTimer = setInterval(()=>{
     cooldown--;
-    bar.style.width = (cooldown/total*100) + '%';
     btn.textContent = `COOLDOWN ${cooldown}s`;
-    if (cooldown <= 0) {
-      clearInterval(cooldownTimer);
-      btn.disabled = false;
-      btn.textContent = `⚡ ATTACK ${targetCountry}`;
-      bar.style.width = '0%';
-      showToast('⚡ Saldırı hazır!', 'success');
+    if (cooldown<=0) {
+      clearInterval(cdTimer);
+      btn.disabled = false; btn.style.opacity='1';
+      btn.textContent = targetCountry ? `⚡ ${targetCountry} SALDIRI BAŞLAT` : '⚡ SALDIRI BAŞLAT';
+      showToast('⚡ Saldırı hazır!','success');
     }
-  }, 1000);
+  },1000);
 }
 
 /* ── BUY AMMO ── */
 async function buyAmmo(pack) {
-  if (!wallet) { showToast('Önce wallet bağla!', 'error'); return; }
+  if (!wallet) { showToast('Önce wallet bağla!','error'); return; }
   try {
-    const res = await fetch(API+'/api/market/buy-demo', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({wallet, pack})
-    });
+    const res = await fetch(API+'/api/market/buy-demo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({wallet,pack})});
     const data = await res.json();
-    if (data.error) showToast(data.error, 'error');
-    else showToast(`✅ ${Number(pack).toLocaleString()} ammo satın alındı!`, 'success');
-  } catch(e) { showToast('Satın alma başarısız.', 'error'); }
+    if (data.error) showToast(data.error,'error');
+    else showToast(`✅ ${pack.toLocaleString('tr-TR')} mermi satın alındı!`,'success');
+  } catch(e) { showToast('Satın alma başarısız.','error'); }
 }
 
 /* ── CHAT ── */
 function sendChat() {
-  const input = document.getElementById('chatInput');
-  const msg = input.value.trim(); if (!msg) return;
-  const myFlag = FLAGS[myCountry]||'🏳️';
-  const walletShort = wallet ? wallet.slice(0,6)+'...' : 'Guest';
+  const inp = document.getElementById('chatInput');
+  const msg = inp.value.trim(); if (!msg) return;
+  const c = CD[myCountry];
   const row = document.createElement('div');
-  row.className = 'chat-msg anim-new';
-  row.innerHTML = `<div class="chat-sender"><span class="chat-flag">${myFlag}</span><span class="chat-name">${walletShort}</span><span class="chat-time">just now</span></div><div class="chat-text">${msg}</div>`;
-  const body = document.getElementById('chatBody');
-  body.insertBefore(row, body.firstChild);
-  input.value = '';
-  if (wallet) fetch(API+'/api/alliance/radio', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({wallet,command:msg})}).catch(()=>{});
+  row.className='chat-msg anim-new';
+  row.innerHTML=`<div class="chat-who"><span style="font-size:11px">${c?.f||'🏳️'}</span><span class="chat-name">${wallet?wallet.slice(0,6)+'...':'Misafir'}</span><span class="chat-t">şimdi</span></div><div class="chat-txt">${msg}</div>`;
+  const body=document.getElementById('chatBody');
+  body.insertBefore(row,body.firstChild);
+  inp.value='';
+  if (wallet) fetch(API+'/api/alliance/radio',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({wallet,command:msg})}).catch(()=>{});
 }
 
-/* ── LEADERBOARD ── */
-function setLbTab(tab, el) {
+/* ── LB ── */
+function setLbTab(tab,el) {
   document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
 }
 
 function updateLeaderboard(countries) {
   gameCountries = countries;
-  const sorted = [...countries].filter(c=>c.is_alive!==false).sort((a,b)=>(b.hp||0)-(a.hp||0));
-  const list = document.getElementById('lbList'); list.innerHTML='';
-  sorted.slice(0,10).forEach((c,i) => {
-    const row = document.createElement('div');
-    row.className = 'lb-row'+(c.code===myCountry?' me':'');
-    row.innerHTML = `<span class="lb-num">${i+1}</span><span class="lb-flag">${FLAGS[c.code]||'🏳️'}</span><span class="lb-name">${c.name||c.code}</span><span class="lb-hp">${((c.hp||0)/1000).toFixed(1)}K</span>`;
+  const sorted=[...countries].filter(c=>c.is_alive!==false).sort((a,b)=>(b.hp||0)-(a.hp||0));
+  const list=document.getElementById('lbList'); list.innerHTML='';
+  sorted.slice(0,10).forEach((c,i)=>{
+    const cd=CD[c.code];
+    const row=document.createElement('div');
+    row.className='lb-row'+(c.code===myCountry?' me':'');
+    row.innerHTML=`<span class="lb-num">${i+1}</span><span style="font-size:13px">${cd?.f||'🏳️'}</span><span class="lb-name">${cd?.n||c.code}</span><span class="lb-hp">${((c.hp||0)/1000).toFixed(1)}K</span>`;
     list.appendChild(row);
   });
   if (myCountry) {
-    const me = sorted.find(c=>c.code===myCountry);
+    const me=sorted.find(c=>c.code===myCountry);
     if (me) {
-      const pct = Math.max(0, (me.hp/100000*100));
-      const bar = document.getElementById('myHpBar');
-      if (bar) bar.style.width = pct+'%';
-      const cur = document.querySelector('.hp-current');
-      if (cur) cur.textContent = Number(me.hp).toLocaleString();
-      const pctEl = document.querySelector('.hp-pct');
-      if (pctEl) pctEl.textContent = pct.toFixed(1)+'%';
+      const pct=Math.max(0,(me.hp/100000*100));
+      document.getElementById('coHPBar').style.width=pct+'%';
+      document.getElementById('coHP').textContent=me.hp.toLocaleString('tr-TR');
+      document.getElementById('coHPPct').textContent=pct.toFixed(1)+'%';
+      const rank=sorted.findIndex(c=>c.code===myCountry)+1;
+      document.getElementById('coRank').textContent='#'+rank;
     }
   }
+  renderLabels();
 }
 
-/* ── GAME STATE POLL ── */
+/* ── POLL ── */
 async function pollState() {
   try {
-    const res = await fetch(API+'/api/game/state');
-    const data = await res.json();
+    const res=await fetch(API+'/api/game/state');
+    const data=await res.json();
     if (data?.countries) updateLeaderboard(data.countries);
-    if (data?.onlinePlayers !== undefined) document.getElementById('onlineCount').textContent = Number(data.onlinePlayers).toLocaleString();
-  } catch(e) {}
+    if (data?.onlinePlayers!=null) document.getElementById('onlineCount').textContent=Number(data.onlinePlayers).toLocaleString('tr-TR');
+  } catch(e){}
 }
 
-/* ── MODALS ── */
-let modalMode = 'nation'; // 'nation' | 'target'
-
-function openCountryModal(mode) {
+/* ── MODAL ── */
+function openModal(mode) {
   modalMode = mode || (myCountry ? 'target' : 'nation');
-  const title = document.getElementById('modalTitle');
-  const sub   = document.getElementById('modalSub');
-  if (modalMode === 'nation') {
-    title.textContent = 'SELECT YOUR NATION';
-    sub.textContent   = 'Bir kez seçtikten sonra ülken elenene kadar değiştiremezsin.';
-  } else {
-    title.textContent = 'SELECT TARGET NATION';
-    sub.textContent   = 'Saldırmak istediğin ülkeyi seç.';
-  }
-  // Disable own country button
-  document.querySelectorAll('#countryGrid .country-btn').forEach(btn => {
-    const code = btn.getAttribute('onclick').match(/'(\w+)'/)?.[1];
-    btn.disabled = (code === myCountry);
-    btn.style.opacity = (code === myCountry) ? '0.3' : '1';
+  document.getElementById('modalTitle').textContent = modalMode==='nation' ? 'ÜLKENI SEÇ' : 'HEDEF ÜLKE SEÇ';
+  document.getElementById('modalSub').textContent = modalMode==='nation' ? 'Bir kez seçince ülken elenene kadar değiştiremezsin.' : 'Saldırmak istediğin ülkeyi seç.';
+  document.querySelectorAll('#cGrid .c-btn').forEach(btn=>{
+    const m=btn.getAttribute('onclick').match(/'(\w+)'/);
+    const code=m?m[1]:null;
+    btn.disabled=(code===myCountry);
+    btn.style.opacity=(code===myCountry)?'0.25':'1';
   });
   document.getElementById('countryModal').classList.add('show');
 }
-
-function modalAction(code) {
-  closeModal();
-  if (modalMode === 'nation') chooseCountry(code);
-  else selectTarget(code);
-}
-
+function modalAction(code) { closeModal(); if(modalMode==='nation') chooseCountry(code); else selectTarget(code); }
 function closeModal() { document.getElementById('countryModal').classList.remove('show'); }
-document.getElementById('countryModal').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+document.getElementById('countryModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
 
 /* ── TOAST ── */
-function showToast(msg, type='info') {
+function showToast(msg,type='info') {
   clearTimeout(toastTimer);
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = `toast show ${type}`;
-  toastTimer = setTimeout(()=>t.classList.remove('show'), 3000);
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`toast show ${type}`;
+  toastTimer=setTimeout(()=>t.classList.remove('show'),3000);
 }
 
 /* ── TIMER ── */
-let secs = 23*86400+14*3600+42*60+18;
+let secs=23*86400+14*3600+42*60+18;
 setInterval(()=>{
-  if(secs>0) secs--;
+  if(secs>0)secs--;
   const d=Math.floor(secs/86400),h=Math.floor((secs%86400)/3600),m=Math.floor((secs%3600)/60),s=secs%60;
-  document.getElementById('timerVal').textContent=`${d}D ${String(h).padStart(2,'0')}H ${String(m).padStart(2,'0')}M ${String(s).padStart(2,'0')}S`;
+  document.getElementById('timerVal').textContent=`${d}G ${String(h).padStart(2,'0')}S ${String(m).padStart(2,'0')}D ${String(s).padStart(2,'0')}S`;
 },1000);
 
 /* ── WEBSOCKET ── */
-const ioScript = document.createElement('script');
-ioScript.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
-ioScript.onload = () => {
-  const socket = io(API, {transports:['websocket'],reconnectionDelay:3000});
-  socket.on('connect', ()=>{ setInterval(()=>{ if(wallet) socket.emit('heartbeat',{wallet}); },30000); });
-  socket.on('war:attack', (d)=>{
-    const from=d.attackerCountry||d.from||'?', to=d.targetCountry||d.to||'?';
-    addActivityItem(from, to);
+const ioScript=document.createElement('script');
+ioScript.src='https://cdn.socket.io/4.7.2/socket.io.min.js';
+ioScript.onload=()=>{
+  const socket=io(API,{transports:['websocket'],reconnectionDelay:3000});
+  socket.on('connect',()=>{
+    document.querySelector('.gdot').style.background='#00c853';
+    setInterval(()=>{if(wallet)socket.emit('heartbeat',{wallet});},30000);
   });
-  socket.on('hp:update', (d)=>{ updateCountryHP(d.target||d.targetCountry, d.newHP||d.hp); });
-  socket.on('war:state', (d)=>{ if(d?.countries) updateLeaderboard(d.countries); });
-  socket.on('players:online', (n)=>{ document.getElementById('onlineCount').textContent=Number(n).toLocaleString(); });
-  socket.on('country:eliminated', (d)=>{ showToast(`💀 ${FLAGS[d.country]||''} ${d.country} ELİMİNE EDİLDİ!`,'error'); });
-  socket.on('game:over', (d)=>{ showToast(`🏆 OYUN BİTTİ! Kazanan: ${FLAGS[d.winner]||''} ${d.winner}`,'success'); });
-  socket.on('alliance:feed', (d)=>{
+  socket.on('disconnect',()=>{ document.querySelector('.gdot').style.background='#e8162a'; });
+  socket.on('war:attack',(d)=>{
+    const from=d.attackerCountry||d.from||'', to=d.targetCountry||d.to||'';
+    if(from&&to){ addActivity(from,to); drawAttackLine(from,to); }
+  });
+  socket.on('hp:update',(d)=>{ updateHP(d.target||d.targetCountry, d.newHP||d.hp); });
+  socket.on('war:state',(d)=>{ if(d?.countries) updateLeaderboard(d.countries); });
+  socket.on('players:online',(n)=>{ document.getElementById('onlineCount').textContent=Number(n).toLocaleString('tr-TR'); });
+  socket.on('country:eliminated',(d)=>{ showToast(`💀 ${CD[d.country]?.f||''} ${CD[d.country]?.n||d.country} ELİMİNE EDİLDİ!`,'error'); });
+  socket.on('game:over',(d)=>{ showToast(`🏆 OYUN BİTTİ! Kazanan: ${CD[d.winner]?.f||''} ${CD[d.winner]?.n||d.winner}`,'success'); });
+  socket.on('alliance:feed',(d)=>{
     const row=document.createElement('div'); row.className='chat-msg anim-new';
-    row.innerHTML=`<div class="chat-sender"><span class="chat-flag">${FLAGS[d.country]||'🏳️'}</span><span class="chat-name">${(d.wallet||'').slice(0,6)}</span><span class="chat-time">now</span></div><div class="chat-text">${d.command||d.message||''}</div>`;
+    const cc=CD[d.country]||{};
+    row.innerHTML=`<div class="chat-who"><span style="font-size:11px">${cc.f||'🏳️'}</span><span class="chat-name">${(d.wallet||'???').slice(0,6)}</span><span class="chat-t">şimdi</span></div><div class="chat-txt">${d.command||d.message||''}</div>`;
     const body=document.getElementById('chatBody');
     body.insertBefore(row,body.firstChild);
-    if(body.children.length>20) body.removeChild(body.lastChild);
+    if(body.children.length>20)body.removeChild(body.lastChild);
   });
 };
 document.head.appendChild(ioScript);
 
 /* ── METAMASK EVENTS ── */
-if (window.ethereum) {
-  ethereum.on('accountsChanged', (accounts)=>{
-    if (!accounts.length) {
-      wallet=null;
-      document.getElementById('walletBtn').textContent='CONNECT WALLET';
-      document.getElementById('walletBtn').className='btn-wallet';
-      showToast('Wallet bağlantısı kesildi.','error');
-    } else { wallet=accounts[0]; document.getElementById('walletBtn').textContent=wallet.slice(0,6)+'...'+wallet.slice(-4); registerPlayer(); }
+if(window.ethereum){
+  ethereum.on('accountsChanged',(accounts)=>{
+    if(!accounts.length){wallet=null;document.getElementById('walletBtn').textContent='WALLET BAĞLA';document.getElementById('walletBtn').className='btn-wallet';showToast('Wallet bağlantısı kesildi.','error');}
+    else{wallet=accounts[0];document.getElementById('walletBtn').textContent=wallet.slice(0,6)+'...'+wallet.slice(-4);registerPlayer();}
   });
 }
 
 /* ── INIT ── */
+renderLabels();
 pollState();
-setInterval(pollState, 15000);
+setInterval(pollState,15000);
 </script>
 </body>
 </html>
