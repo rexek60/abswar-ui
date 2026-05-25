@@ -604,7 +604,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
           style="padding:6px 16px;background:var(--red);color:white;font-family:var(--hud);font-size:9px;letter-spacing:2px;border:none;cursor:pointer;border-radius:1px;opacity:0.5" disabled>
           ⚡ FIRE ATTACK
         </button>
-        <button onclick="openCountryModal()"
+        <button onclick="openCountryModal('target')"
           style="padding:6px 12px;background:var(--bg2);color:var(--dim);font-family:var(--hud);font-size:9px;letter-spacing:1px;border:1px solid var(--border);cursor:pointer;border-radius:1px">
           SELECT TARGET ▾
         </button>
@@ -760,7 +760,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
       <div class="ys-row"><span class="ys-label">DEATHS</span><span class="ys-val" id="ysDeaths">612</span></div>
       <div class="ys-row"><span class="ys-label">CONTRIBUTION SCORE</span><span class="ys-val green" id="ysScore">15,430</span></div>
       <div class="ys-row"><span class="ys-label">RANK</span><span class="ys-val">Commander</span></div>
-      <div class="ys-row"><span class="ys-label">COUNTRY</span><span class="ys-val">🇹🇷 TURKEY</span></div>
+      <div class="ys-row"><span class="ys-label">COUNTRY</span><span class="ys-val" id="ysCountry">— NOT SELECTED —</span></div>
     </div>
   </div>
 
@@ -916,24 +916,27 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
   <button class="btn-join" onclick="connectWallet()">JOIN THE WAR</button>
 </div>
 
-<!-- COUNTRY MODAL -->
+<!-- COUNTRY MODAL (dual mode: nation select OR target select) -->
 <div class="modal" id="countryModal">
   <div class="modal-box">
     <button class="modal-close" onclick="closeModal()">✕ CLOSE</button>
-    <div class="modal-title">SELECT TARGET NATION</div>
-    <div class="country-grid">
-      <button class="country-btn" onclick="selectTarget('US');closeModal()">🇺🇸 USA</button>
-      <button class="country-btn" onclick="selectTarget('RU');closeModal()">🇷🇺 Russia</button>
-      <button class="country-btn" onclick="selectTarget('CN');closeModal()">🇨🇳 China</button>
-      <button class="country-btn" onclick="selectTarget('DE');closeModal()">🇩🇪 Germany</button>
-      <button class="country-btn" onclick="selectTarget('FR');closeModal()">🇫🇷 France</button>
-      <button class="country-btn" onclick="selectTarget('GB');closeModal()">🇬🇧 UK</button>
-      <button class="country-btn" onclick="selectTarget('JP');closeModal()">🇯🇵 Japan</button>
-      <button class="country-btn" onclick="selectTarget('BR');closeModal()">🇧🇷 Brazil</button>
-      <button class="country-btn" onclick="selectTarget('IN');closeModal()">🇮🇳 India</button>
-      <button class="country-btn" onclick="selectTarget('KR');closeModal()">🇰🇷 S.Korea</button>
-      <button class="country-btn" onclick="selectTarget('UA');closeModal()">🇺🇦 Ukraine</button>
-      <button class="country-btn" onclick="selectTarget('GR');closeModal()">🇬🇷 Greece</button>
+    <div class="modal-title" id="modalTitle">SELECT YOUR NATION</div>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--dim);margin-bottom:12px" id="modalSub">
+      Bir kez seçtikten sonra ülken elenene kadar değiştiremezsin.
+    </div>
+    <div class="country-grid" id="countryGrid">
+      <button class="country-btn" onclick="modalAction('TR')">🇹🇷 Turkey</button>
+      <button class="country-btn" onclick="modalAction('US')">🇺🇸 USA</button>
+      <button class="country-btn" onclick="modalAction('RU')">🇷🇺 Russia</button>
+      <button class="country-btn" onclick="modalAction('CN')">🇨🇳 China</button>
+      <button class="country-btn" onclick="modalAction('DE')">🇩🇪 Germany</button>
+      <button class="country-btn" onclick="modalAction('FR')">🇫🇷 France</button>
+      <button class="country-btn" onclick="modalAction('GB')">🇬🇧 UK</button>
+      <button class="country-btn" onclick="modalAction('JP')">🇯🇵 Japan</button>
+      <button class="country-btn" onclick="modalAction('BR')">🇧🇷 Brazil</button>
+      <button class="country-btn" onclick="modalAction('IN')">🇮🇳 India</button>
+      <button class="country-btn" onclick="modalAction('KR')">🇰🇷 S.Korea</button>
+      <button class="country-btn" onclick="modalAction('UA')">🇺🇦 Ukraine</button>
     </div>
   </div>
 </div>
@@ -947,60 +950,105 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 
 <script>
 const API = 'https://abswar-clean-backend-production.up.railway.app';
-let wallet = null, myCountry = 'TR', targetCountry = null, cooldown = 0, cooldownTimer = null;
+const FLAGS = {TR:'🇹🇷',US:'🇺🇸',RU:'🇷🇺',CN:'🇨🇳',DE:'🇩🇪',FR:'🇫🇷',GB:'🇬🇧',JP:'🇯🇵',BR:'🇧🇷',IN:'🇮🇳',KR:'🇰🇷',UA:'🇺🇦',GR:'🇬🇷',BG:'🇧🇬',AM:'🇦🇲',CY:'🇨🇾',SY:'🇸🇾',CA:'🇨🇦',AU:'🇦🇺'};
+const NAMES = {TR:'Turkey',US:'USA',RU:'Russia',CN:'China',DE:'Germany',FR:'France',GB:'UK',JP:'Japan',BR:'Brazil',IN:'India',KR:'S.Korea',UA:'Ukraine'};
+const TARGET_POS = {US:{cx:148,cy:165},RU:{cx:590,cy:95},CN:{cx:660,cy:165},BR:{cx:222,cy:335},IN:{cx:570,cy:185},DE:{cx:400,cy:80},FR:{cx:390,cy:90},GB:{cx:375,cy:72},JP:{cx:730,cy:155},KR:{cx:715,cy:160},UA:{cx:460,cy:88}};
+
+let wallet = null, myCountry = null, targetCountry = null;
+let cooldown = 0, cooldownTimer = null, toastTimer = null;
+let gameCountries = [];
 
 /* ── WALLET ── */
 async function connectWallet() {
-  if (!window.ethereum) { showToast('MetaMask bulunamadı!', 'error'); return; }
+  if (!window.ethereum) { showToast('MetaMask bulunamadı! metamask.io adresinden kur.', 'error'); return; }
   try {
     const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
     wallet = accounts[0];
-    const btn = document.getElementById('walletBtn');
-    btn.textContent = wallet.slice(0,6)+'...'+wallet.slice(-4);
-    btn.className = 'btn-wallet connected';
-    showToast('Bağlandı: ' + wallet.slice(0,6)+'...', 'success');
-    try {
-      const res = await fetch(API+'/api/player/connect', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({wallet})
-      });
-      const data = await res.json();
-      if (data.player?.contribution) {
-        document.getElementById('myContrib').textContent = data.player.contribution.toLocaleString();
-        document.getElementById('ysScore').textContent = data.player.contribution.toLocaleString();
-      }
-    } catch(e){}
-  } catch(e){ showToast('Bağlantı iptal edildi.', 'error'); }
+    document.getElementById('walletBtn').textContent = wallet.slice(0,6)+'...'+wallet.slice(-4);
+    document.getElementById('walletBtn').className = 'btn-wallet connected';
+    document.getElementById('ethBal').textContent = wallet.slice(0,6)+'...';
+    await registerPlayer();
+  } catch(e) { showToast('Bağlantı iptal edildi.', 'error'); }
 }
 
-/* ── TARGET ── */
-const TARGET_POS = {US:{cx:148,cy:165},RU:{cx:590,cy:95},CN:{cx:660,cy:165},BR:{cx:222,cy:335},IN:{cx:570,cy:185}};
+async function registerPlayer() {
+  try {
+    const res = await fetch(API+'/api/player/connect', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({wallet})
+    });
+    const data = await res.json();
+    const p = data.player || data;
+    const cc = p.countryCode || p.country_code;
+    if (cc) {
+      myCountry = cc;
+      applyMyCountry(cc);
+      showToast('Hoş geldin Commander! Ülken: ' + (FLAGS[cc]||'') + ' ' + cc, 'success');
+    } else {
+      showToast('Wallet bağlandı! Şimdi ülke seç.', 'success');
+      setTimeout(() => openCountryModal('nation'), 800);
+    }
+    if (p.contribution) {
+      document.getElementById('myContrib').textContent = Number(p.contribution).toLocaleString();
+      document.getElementById('ysScore').textContent = Number(p.contribution).toLocaleString();
+    }
+  } catch(e) { showToast('Sunucuya bağlanılamadı.', 'error'); }
+}
+
+/* ── CHOOSE COUNTRY ── */
+async function chooseCountry(code) {
+  if (!wallet) { showToast('Önce wallet bağla!', 'error'); return; }
+  closeModal();
+  try {
+    const res = await fetch(API+'/api/player/choose-country', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({wallet, countryCode: code})
+    });
+    const data = await res.json();
+    if (data.error) { showToast(data.error, 'error'); return; }
+    myCountry = code;
+    applyMyCountry(code);
+    showToast('Ülke seçildi: ' + (FLAGS[code]||'') + ' ' + code, 'success');
+  } catch(e) { showToast('Ülke seçilemedi.', 'error'); }
+}
+
+function applyMyCountry(code) {
+  const flag = FLAGS[code] || '🏳️';
+  const coFlag = document.querySelector('.co-flag');
+  const coName = document.querySelector('.co-name');
+  if (coFlag) coFlag.textContent = flag;
+  if (coName) coName.textContent = code;
+  const ysCountry = document.getElementById('ysCountry');
+  if (ysCountry) ysCountry.textContent = flag + ' ' + code;
+}
+
+/* ── SELECT TARGET ── */
 function selectTarget(code) {
-  if (code === myCountry) { showToast('Kendi ülkene saldıramazsın!','error'); return; }
+  if (code === myCountry) { showToast('Kendi ülkene saldıramazsın!', 'error'); return; }
   targetCountry = code;
   const lock = document.getElementById('targetLock');
-  const circle = document.getElementById('targetCircle');
-  const label = document.getElementById('targetLabel');
   const pos = TARGET_POS[code];
-  if (pos) {
+  if (pos && lock) {
     lock.setAttribute('display','block');
-    lock.setAttribute('transform',`translate(${pos.cx},${pos.cy})`);
+    lock.setAttribute('transform', `translate(${pos.cx},${pos.cy})`);
   }
   const btn = document.getElementById('attackBtn');
-  btn.disabled = false;
-  btn.style.opacity = '1';
-  btn.textContent = `⚡ ATTACK ${code}`;
-  showToast(`Target locked: ${code}`, 'info');
+  btn.disabled = (cooldown > 0);
+  btn.style.opacity = cooldown > 0 ? '0.5' : '1';
+  btn.textContent = cooldown > 0 ? `COOLDOWN ${cooldown}s` : `⚡ ATTACK ${code}`;
+  const c = gameCountries.find(x => x.code === code);
+  showToast(`🎯 ${FLAGS[code]||''} ${code}${c ? ' — '+Number(c.hp).toLocaleString()+' HP' : ''}`, 'info');
 }
 
 /* ── ATTACK ── */
 async function attackTarget() {
-  if (!wallet) { showToast('Önce wallet bağla!','error'); return; }
-  if (!targetCountry) { showToast('Hedef seçilmedi!','error'); return; }
-  if (cooldown > 0) { showToast(`Cooldown: ${cooldown}s`, 'error'); return; }
+  if (!wallet)        { showToast('Önce wallet bağla!', 'error'); return; }
+  if (!myCountry)     { showToast('Önce ülke seç!', 'error'); openCountryModal(); return; }
+  if (!targetCountry) { showToast('Haritadan hedef seç!', 'error'); return; }
+  if (cooldown > 0)   { showToast(`Cooldown: ${cooldown}s`, 'error'); return; }
 
-  document.getElementById('attackBtn').disabled = true;
-  document.getElementById('attackBtn').textContent = 'FIRING...';
+  const btn = document.getElementById('attackBtn');
+  btn.disabled = true; btn.textContent = '🔴 FIRING...';
 
   try {
     const res = await fetch(API+'/api/game/attack', {
@@ -1008,26 +1056,50 @@ async function attackTarget() {
       body: JSON.stringify({wallet, targetCountry})
     });
     const data = await res.json();
-    if (data.error) { showToast(data.error,'error'); }
-    else {
-      showToast(`⚡ ${targetCountry} hit! -1 HP`, 'success');
-      addAttackHistory(targetCountry);
-      startCooldown(10);
+    if (data.error) {
+      showToast(data.error, 'error');
+      btn.disabled = false; btn.textContent = `⚡ ATTACK ${targetCountry}`;
+    } else {
+      const dmg = data.damage || 1;
+      showToast(`⚡ ${FLAGS[targetCountry]||''} ${targetCountry} HIT! -${dmg} HP`, 'success');
+      addAttackHistory(targetCountry, dmg);
+      addActivityItem(myCountry, targetCountry);
+      if (data.newHp !== undefined) updateCountryHP(targetCountry, data.newHp);
+      startCooldown(data.cooldown || 10);
+      const cur = parseInt(document.getElementById('myContrib').textContent.replace(/,/g,''))||0;
+      document.getElementById('myContrib').textContent = (cur+1).toLocaleString();
+      document.getElementById('ysScore').textContent = (cur+1).toLocaleString();
     }
-  } catch(e){ showToast('Saldırı başarısız.','error'); }
-  finally {
-    document.getElementById('attackBtn').textContent = `⚡ ATTACK ${targetCountry}`;
+  } catch(e) {
+    showToast('Saldırı başarısız.', 'error');
+    btn.disabled = false; btn.textContent = `⚡ ATTACK ${targetCountry}`;
   }
 }
 
-function addAttackHistory(code) {
-  const flags = {US:'🇺🇸',RU:'🇷🇺',CN:'🇨🇳',BR:'🇧🇷',IN:'🇮🇳',DE:'🇩🇪',FR:'🇫🇷',GB:'🇬🇧',JP:'🇯🇵',KR:'🇰🇷',UA:'🇺🇦',GR:'🇬🇷'};
-  const f = flags[code] || '🏳️';
+function updateCountryHP(code, hp) {
+  const c = gameCountries.find(x => x.code === code);
+  if (c) c.hp = hp;
+  document.querySelectorAll(`[data-code="${code}"] text`).forEach(n => {
+    if (n.textContent.includes('HP')) n.textContent = `${(hp/1000).toFixed(1)}K HP`;
+  });
+}
+
+function addAttackHistory(code, dmg) {
   const row = document.createElement('div');
   row.className = 'ah-row anim-new';
-  row.innerHTML = `<div class="ah-target"><span>${f}</span> ${code}</div><div class="ah-dmg">-1 HP</div><div class="ah-time">just now</div>`;
+  row.innerHTML = `<div class="ah-target"><span>${FLAGS[code]||'🏳️'}</span> ${code}</div><div class="ah-dmg">-${dmg||1} HP</div><div class="ah-time">just now</div>`;
   const hist = document.getElementById('attackHistory');
   hist.insertBefore(row, hist.firstChild);
+  if (hist.children.length > 20) hist.removeChild(hist.lastChild);
+}
+
+function addActivityItem(from, to) {
+  const item = document.createElement('div');
+  item.className = 'activity-item anim-new';
+  item.innerHTML = `<div class="act-country"><span class="act-dot"></span>${FLAGS[to]||''} ${to}</div><div class="act-detail">attacked by <span>${FLAGS[from]||''} ${from}</span></div><div class="act-time">just now</div>`;
+  const list = document.getElementById('activityList');
+  list.insertBefore(item, list.firstChild);
+  if (list.children.length > 10) list.removeChild(list.lastChild);
 }
 
 function startCooldown(secs) {
@@ -1035,20 +1107,32 @@ function startCooldown(secs) {
   clearInterval(cooldownTimer);
   const btn = document.getElementById('attackBtn');
   btn.disabled = true;
+  let bar = document.getElementById('cooldownBar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'cooldownBar';
+    bar.style.cssText = 'height:2px;background:var(--red);transition:width 1s linear;width:100%;margin-top:4px';
+    btn.insertAdjacentElement('afterend', bar);
+  }
+  bar.style.width = '100%';
+  const total = secs;
   cooldownTimer = setInterval(() => {
     cooldown--;
+    bar.style.width = (cooldown/total*100) + '%';
     btn.textContent = `COOLDOWN ${cooldown}s`;
     if (cooldown <= 0) {
       clearInterval(cooldownTimer);
       btn.disabled = false;
       btn.textContent = `⚡ ATTACK ${targetCountry}`;
+      bar.style.width = '0%';
+      showToast('⚡ Saldırı hazır!', 'success');
     }
   }, 1000);
 }
 
 /* ── BUY AMMO ── */
 async function buyAmmo(pack) {
-  if (!wallet) { showToast('Önce wallet bağla!','error'); return; }
+  if (!wallet) { showToast('Önce wallet bağla!', 'error'); return; }
   try {
     const res = await fetch(API+'/api/market/buy-demo', {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -1056,56 +1140,54 @@ async function buyAmmo(pack) {
     });
     const data = await res.json();
     if (data.error) showToast(data.error, 'error');
-    else showToast(`${pack} ammo satın alındı!`, 'success');
-  } catch(e){ showToast('Satın alma başarısız.','error'); }
+    else showToast(`✅ ${Number(pack).toLocaleString()} ammo satın alındı!`, 'success');
+  } catch(e) { showToast('Satın alma başarısız.', 'error'); }
 }
 
 /* ── CHAT ── */
 function sendChat() {
   const input = document.getElementById('chatInput');
-  const msg = input.value.trim();
-  if (!msg) return;
+  const msg = input.value.trim(); if (!msg) return;
+  const myFlag = FLAGS[myCountry]||'🏳️';
+  const walletShort = wallet ? wallet.slice(0,6)+'...' : 'Guest';
   const row = document.createElement('div');
   row.className = 'chat-msg anim-new';
-  row.innerHTML = `<div class="chat-sender"><span class="chat-flag">🇹🇷</span><span class="chat-name">YOU</span><span class="chat-time">just now</span></div><div class="chat-text">${msg}</div>`;
+  row.innerHTML = `<div class="chat-sender"><span class="chat-flag">${myFlag}</span><span class="chat-name">${walletShort}</span><span class="chat-time">just now</span></div><div class="chat-text">${msg}</div>`;
   const body = document.getElementById('chatBody');
   body.insertBefore(row, body.firstChild);
   input.value = '';
-  if (wallet) {
-    fetch(API+'/api/alliance/radio', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({wallet, command: msg})
-    }).catch(()=>{});
-  }
+  if (wallet) fetch(API+'/api/alliance/radio', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({wallet,command:msg})}).catch(()=>{});
 }
 
-/* ── LEADERBOARD TAB ── */
+/* ── LEADERBOARD ── */
 function setLbTab(tab, el) {
   document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
 }
 
-/* ── MODALS ── */
-function openCountryModal(){ document.getElementById('countryModal').classList.add('show'); }
-function closeModal(){ document.getElementById('countryModal').classList.remove('show'); }
-document.getElementById('countryModal').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
-
-/* ── TOAST ── */
-let toastTimer;
-function showToast(msg, type='info') {
-  clearTimeout(toastTimer);
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = `toast show ${type}`;
-  toastTimer = setTimeout(()=>{ t.classList.remove('show'); }, 2800);
+function updateLeaderboard(countries) {
+  gameCountries = countries;
+  const sorted = [...countries].filter(c=>c.is_alive!==false).sort((a,b)=>(b.hp||0)-(a.hp||0));
+  const list = document.getElementById('lbList'); list.innerHTML='';
+  sorted.slice(0,10).forEach((c,i) => {
+    const row = document.createElement('div');
+    row.className = 'lb-row'+(c.code===myCountry?' me':'');
+    row.innerHTML = `<span class="lb-num">${i+1}</span><span class="lb-flag">${FLAGS[c.code]||'🏳️'}</span><span class="lb-name">${c.name||c.code}</span><span class="lb-hp">${((c.hp||0)/1000).toFixed(1)}K</span>`;
+    list.appendChild(row);
+  });
+  if (myCountry) {
+    const me = sorted.find(c=>c.code===myCountry);
+    if (me) {
+      const pct = Math.max(0, (me.hp/100000*100));
+      const bar = document.getElementById('myHpBar');
+      if (bar) bar.style.width = pct+'%';
+      const cur = document.querySelector('.hp-current');
+      if (cur) cur.textContent = Number(me.hp).toLocaleString();
+      const pctEl = document.querySelector('.hp-pct');
+      if (pctEl) pctEl.textContent = pct.toFixed(1)+'%';
+    }
+  }
 }
-
-/* ── TIMER ── */
-let secs = 23*86400 + 14*3600 + 42*60 + 18;
-setInterval(()=>{
-  if(secs>0) secs--;
-  const d=Math.floor(secs/86400), h=Math.floor((secs%86400)/3600), m=Math.floor((secs%3600)/60), s=secs%60;
-  document.getElementById('timerVal').textContent = `${d}D ${String(h).padStart(2,'0')}H ${String(m).padStart(2,'0')}M ${String(s).padStart(2,'0')}S`;
-}, 1000);
 
 /* ── GAME STATE POLL ── */
 async function pollState() {
@@ -1113,41 +1195,98 @@ async function pollState() {
     const res = await fetch(API+'/api/game/state');
     const data = await res.json();
     if (data?.countries) updateLeaderboard(data.countries);
-    if (data?.onlinePlayers) document.getElementById('onlineCount').textContent = data.onlinePlayers.toLocaleString();
-  } catch(e){}
+    if (data?.onlinePlayers !== undefined) document.getElementById('onlineCount').textContent = Number(data.onlinePlayers).toLocaleString();
+  } catch(e) {}
 }
-function updateLeaderboard(countries) {
-  const sorted = [...countries].filter(c=>c.is_alive!==false).sort((a,b)=>(b.hp||0)-(a.hp||0));
-  const list = document.getElementById('lbList');
-  list.innerHTML = '';
-  sorted.slice(0,10).forEach((c,i)=>{
-    const flags={TR:'🇹🇷',US:'🇺🇸',RU:'🇷🇺',CN:'🇨🇳',DE:'🇩🇪',FR:'🇫🇷',GB:'🇬🇧',JP:'🇯🇵',BR:'🇧🇷',IN:'🇮🇳',KR:'🇰🇷',UA:'🇺🇦'};
-    const row = document.createElement('div');
-    row.className = 'lb-row' + (c.code===myCountry?' me':'');
-    row.innerHTML = `<span class="lb-num">${i+1}</span><span class="lb-flag">${flags[c.code]||'🏳️'}</span><span class="lb-name">${c.code}</span><span class="lb-hp">${((c.hp||0)/1000).toFixed(1)}K HP</span>`;
-    list.appendChild(row);
+
+/* ── MODALS ── */
+let modalMode = 'nation'; // 'nation' | 'target'
+
+function openCountryModal(mode) {
+  modalMode = mode || (myCountry ? 'target' : 'nation');
+  const title = document.getElementById('modalTitle');
+  const sub   = document.getElementById('modalSub');
+  if (modalMode === 'nation') {
+    title.textContent = 'SELECT YOUR NATION';
+    sub.textContent   = 'Bir kez seçtikten sonra ülken elenene kadar değiştiremezsin.';
+  } else {
+    title.textContent = 'SELECT TARGET NATION';
+    sub.textContent   = 'Saldırmak istediğin ülkeyi seç.';
+  }
+  // Disable own country button
+  document.querySelectorAll('#countryGrid .country-btn').forEach(btn => {
+    const code = btn.getAttribute('onclick').match(/'(\w+)'/)?.[1];
+    btn.disabled = (code === myCountry);
+    btn.style.opacity = (code === myCountry) ? '0.3' : '1';
+  });
+  document.getElementById('countryModal').classList.add('show');
+}
+
+function modalAction(code) {
+  closeModal();
+  if (modalMode === 'nation') chooseCountry(code);
+  else selectTarget(code);
+}
+
+function closeModal() { document.getElementById('countryModal').classList.remove('show'); }
+document.getElementById('countryModal').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+
+/* ── TOAST ── */
+function showToast(msg, type='info') {
+  clearTimeout(toastTimer);
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast show ${type}`;
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+/* ── TIMER ── */
+let secs = 23*86400+14*3600+42*60+18;
+setInterval(()=>{
+  if(secs>0) secs--;
+  const d=Math.floor(secs/86400),h=Math.floor((secs%86400)/3600),m=Math.floor((secs%3600)/60),s=secs%60;
+  document.getElementById('timerVal').textContent=`${d}D ${String(h).padStart(2,'0')}H ${String(m).padStart(2,'0')}M ${String(s).padStart(2,'0')}S`;
+},1000);
+
+/* ── WEBSOCKET ── */
+const ioScript = document.createElement('script');
+ioScript.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
+ioScript.onload = () => {
+  const socket = io(API, {transports:['websocket'],reconnectionDelay:3000});
+  socket.on('connect', ()=>{ setInterval(()=>{ if(wallet) socket.emit('heartbeat',{wallet}); },30000); });
+  socket.on('war:attack', (d)=>{
+    const from=d.attackerCountry||d.from||'?', to=d.targetCountry||d.to||'?';
+    addActivityItem(from, to);
+  });
+  socket.on('hp:update', (d)=>{ updateCountryHP(d.target||d.targetCountry, d.newHP||d.hp); });
+  socket.on('war:state', (d)=>{ if(d?.countries) updateLeaderboard(d.countries); });
+  socket.on('players:online', (n)=>{ document.getElementById('onlineCount').textContent=Number(n).toLocaleString(); });
+  socket.on('country:eliminated', (d)=>{ showToast(`💀 ${FLAGS[d.country]||''} ${d.country} ELİMİNE EDİLDİ!`,'error'); });
+  socket.on('game:over', (d)=>{ showToast(`🏆 OYUN BİTTİ! Kazanan: ${FLAGS[d.winner]||''} ${d.winner}`,'success'); });
+  socket.on('alliance:feed', (d)=>{
+    const row=document.createElement('div'); row.className='chat-msg anim-new';
+    row.innerHTML=`<div class="chat-sender"><span class="chat-flag">${FLAGS[d.country]||'🏳️'}</span><span class="chat-name">${(d.wallet||'').slice(0,6)}</span><span class="chat-time">now</span></div><div class="chat-text">${d.command||d.message||''}</div>`;
+    const body=document.getElementById('chatBody');
+    body.insertBefore(row,body.firstChild);
+    if(body.children.length>20) body.removeChild(body.lastChild);
+  });
+};
+document.head.appendChild(ioScript);
+
+/* ── METAMASK EVENTS ── */
+if (window.ethereum) {
+  ethereum.on('accountsChanged', (accounts)=>{
+    if (!accounts.length) {
+      wallet=null;
+      document.getElementById('walletBtn').textContent='CONNECT WALLET';
+      document.getElementById('walletBtn').className='btn-wallet';
+      showToast('Wallet bağlantısı kesildi.','error');
+    } else { wallet=accounts[0]; document.getElementById('walletBtn').textContent=wallet.slice(0,6)+'...'+wallet.slice(-4); registerPlayer(); }
   });
 }
+
+/* ── INIT ── */
 pollState();
 setInterval(pollState, 15000);
-
-/* ── SOCKET (if available) ── */
-const script = document.createElement('script');
-script.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
-script.onload = () => {
-  const socket = io(API, {transports:['websocket']});
-  socket.on('war:attack', (d) => {
-    const item = document.createElement('div');
-    item.className = 'activity-item anim-new';
-    item.innerHTML = `<div class="act-country"><span class="act-dot"></span>${d.targetCountry||d.to}</div><div class="act-detail">attacked by <span>${d.attackerCountry||d.from}</span></div><div class="act-time">just now</div>`;
-    const list = document.getElementById('activityList');
-    list.insertBefore(item, list.firstChild);
-    if (list.children.length > 10) list.removeChild(list.lastChild);
-  });
-  socket.on('players:online', (n) => { document.getElementById('onlineCount').textContent = Number(n).toLocaleString(); });
-  socket.on('war:state', (d) => { if(d?.countries) updateLeaderboard(d.countries); });
-};
-document.head.appendChild(script);
 </script>
 </body>
 </html>
