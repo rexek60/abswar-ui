@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABSWAR — Global War MMO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#e8162a;--red2:#ff1a3c;--red-g:rgba(232,22,42,0.15);
+  --green:#00c853;--green2:#00ff88;
+  --bg:#0a0c0f;--bg1:#0d1117;--bg2:#111820;--bg3:#161e28;
+  --border:rgba(255,255,255,0.07);--border-r:rgba(232,22,42,0.3);
+  --text:#b8ccd8;--dim:#4a6070;
+  --hud:'Orbitron',monospace;--mono:'Share Tech Mono',monospace;--ui:'Rajdhani',sans-serif;
+}
+html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:var(--ui);overflow:hidden;font-size:13px}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#1e2d3d}
+
+/* SCANLINES */
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(to bottom,transparent 0 2px,rgba(0,0,0,0.06) 2px 4px);pointer-events:none;z-index:9999}
+
+/* TOP NAV */
+.topnav{
+  display:flex;align-items:center;gap:0;
+  height:44px;background:var(--bg1);
+  border-bottom:1px solid var(--border);
+  padding:0 16px;position:relative;z-index:10;
+}
+.logo{display:flex;flex-direction:column;margin-right:28px;line-height:1}
+.logo-main{font-family:var(--hud);font-size:18px;font-weight:900;color:var(--red);letter-spacing:3px;text-shadow:0 0 20px rgba(232,22,42,0.6)}
+.logo-sub{font-size:8px;letter-spacing:3px;color:var(--dim);text-transform:uppercase}
+.nav-links{display:flex;gap:2px}
+.nav-link{
+  padding:0 14px;height:44px;display:flex;align-items:center;
+  font-family:var(--hud);font-size:9px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--dim);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;
+}
+.nav-link:hover{color:var(--text)}
+.nav-link.active{color:var(--red);border-bottom-color:var(--red)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.eth-bal{font-family:var(--mono);font-size:12px;color:var(--red)}
+.btn-wallet{
+  padding:8px 18px;background:var(--red);color:white;
+  font-family:var(--hud);font-size:9px;letter-spacing:2px;
+  border:none;cursor:pointer;border-radius:2px;transition:all .15s;
+}
+.btn-wallet:hover{background:#ff1a3c;box-shadow:0 0 16px rgba(232,22,42,0.5)}
+.btn-wallet.connected{background:transparent;border:1px solid var(--green);color:var(--green);font-size:9px}
+
+/* MAIN LAYOUT */
+.main{
+  display:grid;
+  grid-template-columns:170px 1fr 240px 240px;
+  grid-template-rows:1fr 200px 28px;
+  height:calc(100vh - 44px - 28px);
+  gap:1px;background:rgba(255,255,255,0.04);
+}
+.cell{background:var(--bg1);overflow:hidden;position:relative}
+
+/* LEFT SIDEBAR */
+.left-sidebar{
+  grid-column:1;grid-row:1/3;
+  display:flex;flex-direction:column;
+  background:var(--bg1);
+}
+.live-badge{
+  display:flex;align-items:center;gap:8;padding:10px 12px;
+  border-bottom:1px solid var(--border);
+}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 8px var(--red);animation:blink 1s infinite}
+.live-text{font-family:var(--hud);font-size:11px;font-weight:700;color:var(--red);letter-spacing:3px;margin-left:7px}
+.season-info{padding:8px 12px;border-bottom:1px solid var(--border)}
+.season-label{font-size:8px;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
+.season-name{font-family:var(--hud);font-size:9px;color:var(--text);letter-spacing:1px;margin-top:2px}
+.timer-box{padding:8px 12px;border-bottom:1px solid var(--border)}
+.timer-label{font-size:8px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.timer-val{font-family:var(--mono);font-size:15px;color:var(--red);letter-spacing:2px}
+
+.war-activity{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.section-header{
+  padding:8px 12px;border-bottom:1px solid var(--border);
+  font-family:var(--hud);font-size:9px;letter-spacing:2px;color:var(--text);text-transform:uppercase;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.activity-list{flex:1;overflow-y:auto;padding:4px 0}
+.activity-item{padding:7px 12px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background .1s;cursor:pointer}
+.activity-item:hover{background:rgba(255,255,255,0.03)}
+.act-country{font-family:var(--hud);font-size:10px;color:var(--text);letter-spacing:1px}
+.act-detail{font-size:10px;color:var(--dim);margin-top:1px}
+.act-detail span{color:#888}
+.act-time{font-size:9px;color:var(--dim)}
+.act-dot{width:5px;height:5px;border-radius:50%;background:var(--red);display:inline-block;margin-right:6px;box-shadow:0 0 6px var(--red)}
+
+.btn-view-all{
+  margin:8px 12px;padding:7px;text-align:center;
+  border:1px solid var(--border);color:var(--dim);
+  font-family:var(--hud);font-size:8px;letter-spacing:2px;cursor:pointer;
+  background:transparent;width:calc(100% - 24px);transition:all .15s;
+}
+.btn-view-all:hover{border-color:var(--red);color:var(--red)}
+
+/* MAP AREA */
+.map-area{
+  grid-column:2;grid-row:1/3;
+  position:relative;background:#0a0e12;
+  overflow:hidden;
+}
+.map-overlay-tools{
+  position:absolute;bottom:12px;left:12px;z-index:5;
+  display:flex;flex-direction:column;gap:6px;
+}
+.map-info-bar{
+  position:absolute;bottom:0;left:0;right:0;
+  background:rgba(10,12,15,0.85);border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:16px;padding:6px 12px;z-index:5;
+  font-family:var(--mono);font-size:10px;color:var(--dim);
+}
+
+/* MAP SVG */
+.world-map-svg{width:100%;height:100%}
+
+/* RIGHT PANELS */
+.right-top{grid-column:3;grid-row:1;display:flex;flex-direction:column}
+.right-top2{grid-column:4;grid-row:1;display:flex;flex-direction:column}
+
+/* COUNTRY OVERVIEW */
+.country-overview{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.co-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;border-bottom:1px solid var(--border);
+}
+.co-flag-name{display:flex;align-items:center;gap:8px}
+.co-flag{font-size:20px}
+.co-name{font-family:var(--hud);font-size:13px;font-weight:700;color:white;letter-spacing:2px}
+.co-rank{
+  background:var(--red);color:white;font-family:var(--hud);
+  font-size:9px;padding:3px 6px;text-align:center;
+}
+.rank-label{font-size:7px;color:rgba(255,255,255,0.7);letter-spacing:2px;display:block}
+.rank-num{font-size:14px;font-weight:900}
+
+.hp-section{padding:10px 14px;border-bottom:1px solid var(--border)}
+.hp-numbers{display:flex;justify-content:space-between;margin-bottom:5px}
+.hp-current{font-family:var(--hud);font-size:14px;color:white}
+.hp-max{font-family:var(--mono);font-size:10px;color:var(--dim);align-self:flex-end}
+.hp-bar{height:6px;background:rgba(255,255,255,0.08);border-radius:1px;overflow:hidden;margin-bottom:3px}
+.hp-fill{height:100%;background:linear-gradient(90deg,var(--red),#ff4500);box-shadow:0 0 8px var(--red);transition:width .6s}
+.hp-pct{font-family:var(--mono);font-size:9px;color:var(--red);text-align:right}
+
+.co-stats{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border)}
+.co-stat{padding:8px 10px;border-right:1px solid var(--border)}
+.co-stat:last-child{border-right:none}
+.co-stat-label{font-size:8px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px}
+.co-stat-val{font-family:var(--mono);font-size:11px;color:var(--text)}
+
+.boosts-section{padding:8px 12px;border-bottom:1px solid var(--border)}
+.boosts-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+.boost-card{
+  background:var(--bg2);border:1px solid var(--border);
+  padding:7px 5px;text-align:center;border-radius:2px;cursor:pointer;transition:border-color .15s;
+}
+.boost-card:hover{border-color:rgba(0,200,83,0.4)}
+.boost-icon{font-size:16px;display:block;margin-bottom:3px}
+.boost-type{font-family:var(--hud);font-size:7px;color:var(--dim);letter-spacing:1px}
+.boost-val{font-family:var(--mono);font-size:10px;color:var(--green);margin-top:2px}
+.boost-timer{font-size:8px;color:var(--dim);margin-top:1px}
+
+/* BUY AMMO */
+.ammo-section{flex:1;overflow-y:auto;padding:8px 12px}
+.ammo-row{
+  display:flex;align-items:center;gap:8px;padding:8px 0;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.ammo-icon{font-size:18px;flex-shrink:0}
+.ammo-info{flex:1}
+.ammo-name{font-family:var(--hud);font-size:10px;color:var(--text);letter-spacing:1px}
+.ammo-bullets{font-size:9px;color:var(--dim);margin-top:1px}
+.ammo-price{font-family:var(--mono);font-size:11px;color:var(--red);margin-right:8px}
+.btn-buy{
+  padding:5px 10px;background:var(--red);color:white;
+  font-family:var(--hud);font-size:8px;letter-spacing:1px;
+  border:none;cursor:pointer;border-radius:1px;white-space:nowrap;transition:all .15s;
+}
+.btn-buy:hover{background:#ff1a3c;box-shadow:0 0 12px rgba(232,22,42,0.4)}
+.btn-buy:disabled{background:#2a1018;color:#555;cursor:not-allowed}
+
+/* LEADERBOARD */
+.lb-tabs{display:flex;border-bottom:1px solid var(--border)}
+.lb-tab{
+  flex:1;padding:8px;text-align:center;cursor:pointer;
+  font-family:var(--hud);font-size:8px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--dim);border-bottom:2px solid transparent;transition:all .15s;
+}
+.lb-tab.active{color:var(--text);border-bottom-color:var(--red)}
+.lb-list{overflow-y:auto;flex:1;padding:4px 0}
+.lb-row{
+  display:flex;align-items:center;gap:8px;padding:6px 14px;
+  border-bottom:1px solid rgba(255,255,255,0.03);transition:background .1s;
+}
+.lb-row:hover{background:rgba(255,255,255,0.02)}
+.lb-row.me{background:rgba(232,22,42,0.08)}
+.lb-num{font-family:var(--mono);font-size:10px;color:var(--dim);width:16px;text-align:right}
+.lb-flag{font-size:14px}
+.lb-name{font-family:var(--hud);font-size:9px;color:var(--text);letter-spacing:1px;flex:1}
+.lb-hp{font-family:var(--mono);font-size:10px;color:var(--dim);white-space:nowrap}
+.lb-view-all{
+  margin:8px 14px;padding:7px;text-align:center;border:1px solid var(--border);
+  font-family:var(--hud);font-size:8px;letter-spacing:2px;color:var(--dim);cursor:pointer;
+  background:transparent;width:calc(100% - 28px);transition:all .15s;
+}
+.lb-view-all:hover{border-color:var(--red);color:var(--red)}
+
+/* YOUR STATS */
+.your-stats{padding:8px 14px}
+.ys-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.ys-label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.ys-val{font-family:var(--mono);font-size:10px;color:var(--text)}
+.ys-val.red{color:var(--red)}
+.ys-val.green{color:var(--green)}
+
+/* BOTTOM PANELS */
+.bottom-row{
+  grid-column:1/5;grid-row:2;
+  display:grid;grid-template-columns:220px 280px 280px 1fr 240px;
+  gap:1px;background:rgba(255,255,255,0.04);
+}
+.bottom-cell{background:var(--bg1);overflow:hidden;display:flex;flex-direction:column}
+
+/* ATTACK HISTORY */
+.ah-table{flex:1;overflow-y:auto}
+.ah-head{display:grid;grid-template-columns:1fr 80px 60px;padding:5px 12px;
+  font-family:var(--hud);font-size:8px;letter-spacing:1px;color:var(--dim);
+  border-bottom:1px solid var(--border);text-transform:uppercase}
+.ah-row{display:grid;grid-template-columns:1fr 80px 60px;padding:5px 12px;
+  border-bottom:1px solid rgba(255,255,255,0.03);align-items:center;transition:background .1s}
+.ah-row:hover{background:rgba(255,255,255,0.02)}
+.ah-target{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text)}
+.ah-dmg{font-family:var(--mono);font-size:10px;color:var(--red);font-weight:600}
+.ah-time{font-size:9px;color:var(--dim)}
+
+/* ALLIANCE CHAT */
+.chat-body{flex:1;overflow-y:auto;padding:6px 0}
+.chat-msg{padding:5px 12px;border-bottom:1px solid rgba(255,255,255,0.03)}
+.chat-sender{display:flex;align-items:center;gap:5px;margin-bottom:2px}
+.chat-flag{font-size:11px}
+.chat-name{font-family:var(--hud);font-size:9px;color:var(--text);letter-spacing:1px}
+.chat-alliance{font-size:8px;color:var(--green);margin-left:2px}
+.chat-time{font-size:8px;color:var(--dim);margin-left:auto}
+.chat-text{font-size:10px;color:var(--dim);padding-left:16px}
+.chat-input-row{
+  display:flex;gap:0;border-top:1px solid var(--border);
+  padding:6px 8px;background:var(--bg);
+}
+.chat-input{
+  flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--text);
+  font-family:var(--ui);font-size:11px;padding:5px 8px;outline:none;
+}
+.chat-input::placeholder{color:var(--dim)}
+.chat-send{
+  padding:5px 10px;background:var(--red);color:white;
+  font-size:14px;border:none;cursor:pointer;transition:background .15s;
+}
+.chat-send:hover{background:#ff1a3c}
+
+/* RADAR */
+.radar-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:8px;gap:12px}
+.radar-canvas{position:relative;width:120px;height:120px;flex-shrink:0}
+.radar-svg{width:100%;height:100%}
+.radar-detected{flex:1;overflow-y:auto}
+.det-row{
+  display:flex;align-items:center;gap:6px;padding:5px 0;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.det-flag{font-size:12px}
+.det-country{font-family:var(--hud);font-size:9px;color:var(--text);letter-spacing:1px}
+.det-activity{font-size:9px;margin-top:1px}
+.det-time{font-size:8px;color:var(--dim);margin-left:auto;white-space:nowrap}
+.massive{color:var(--red)}
+.nuclear{color:#ff6b35}
+.movement{color:#f5c842}
+.alliance-m{color:var(--green)}
+
+/* RESOURCE CONTROL */
+.res-body{flex:1;overflow-y:auto;padding:8px 14px}
+.res-row{margin-bottom:12px}
+.res-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.res-name{display:flex;align-items:center;gap:6px;font-family:var(--hud);font-size:9px;letter-spacing:1px;color:var(--text)}
+.res-icon{font-size:14px}
+.res-pct{font-family:var(--mono);font-size:10px;color:var(--text)}
+.res-bar{height:4px;background:rgba(255,255,255,0.07);border-radius:1px;overflow:hidden;margin-bottom:2px}
+.res-fill{height:100%;border-radius:1px;transition:width .6s}
+.res-change{font-size:8px;text-align:right}
+.pos{color:var(--green)}.neg{color:var(--red)}
+
+/* WAR NEWS */
+.news-img{width:100%;height:70px;object-fit:cover;display:block;background:linear-gradient(135deg,#1a0a0a,#0d1520)}
+.news-body{flex:1;overflow-y:auto;padding:8px 12px}
+.news-headline{font-family:var(--hud);font-size:10px;color:white;letter-spacing:1px;margin-bottom:4px;line-height:1.4}
+.news-detail{font-size:9px;color:var(--dim);line-height:1.4;margin-bottom:8px}
+.news-sep{border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:8px}
+.news-minor{font-size:9px;color:var(--text);padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);line-height:1.4}
+.news-minor-time{font-size:8px;color:var(--dim);margin-top:2px}
+
+/* FOOTER */
+.footer{
+  grid-column:1/5;grid-row:3;
+  display:flex;align-items:center;
+  background:var(--bg);border-top:1px solid var(--border);
+  padding:0 16px;gap:16px;
+}
+.footer-logo{font-family:var(--hud);font-size:11px;font-weight:900;color:var(--red);letter-spacing:3px}
+.footer-copy{font-size:8px;color:var(--dim);letter-spacing:1px}
+.footer-links{display:flex;gap:14px;margin:0 auto}
+.footer-link{font-size:10px;color:var(--dim);cursor:pointer;transition:color .15s}
+.footer-link:hover{color:var(--text)}
+.footer-social{display:flex;gap:10px}
+.social-icon{font-size:13px;color:var(--dim);cursor:pointer;transition:color .15s}
+.social-icon:hover{color:var(--text)}
+.footer-online{text-align:right}
+.online-label{font-size:8px;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
+.online-count{font-family:var(--mono);font-size:16px;color:var(--green);font-weight:700}
+.btn-join{
+  padding:8px 20px;background:var(--red);color:white;
+  font-family:var(--hud);font-size:9px;letter-spacing:2px;
+  border:none;cursor:pointer;border-radius:2px;
+  box-shadow:0 0 20px rgba(232,22,42,0.3);transition:all .15s;margin-left:12px;
+}
+.btn-join:hover{background:#ff1a3c;box-shadow:0 0 30px rgba(232,22,42,0.5)}
+
+/* TICKER */
+.ticker-bar{
+  grid-column:1/5;
+  display:flex;align-items:center;
+  background:rgba(10,12,15,0.95);border-top:1px solid var(--border);
+  height:28px;overflow:hidden;
+  position:fixed;bottom:0;left:0;right:0;z-index:20;
+}
+.ticker-label{
+  padding:0 12px;font-family:var(--hud);font-size:8px;letter-spacing:2px;
+  white-space:nowrap;display:flex;align-items:center;gap:6px;
+  border-right:1px solid var(--border);height:100%;
+}
+.ticker-red{color:var(--red)}
+.ticker-warn{color:#f5c842}
+.ticker-scroll{flex:1;overflow:hidden;height:100%;display:flex;align-items:center}
+.ticker-inner{
+  display:flex;gap:40px;
+  animation:tickerScroll 30s linear infinite;
+  white-space:nowrap;font-family:var(--mono);font-size:10px;color:var(--dim);
+}
+.ticker-item span{color:var(--text);margin-right:4px}
+
+/* SECTION LABEL */
+.sec-label{
+  font-family:var(--hud);font-size:8px;letter-spacing:2px;
+  color:var(--dim);text-transform:uppercase;margin-bottom:6px;
+}
+
+/* RADAR SVG ANIMATION */
+@keyframes radarSweep{to{transform:rotate(360deg);transform-origin:center}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes tickerScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes attackFlash{0%{background:rgba(232,22,42,0.2)}100%{background:transparent}}
+
+.anim-new{animation:fadeInUp .3s ease both}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:36px;left:50%;transform:translateX(-50%);
+  padding:10px 20px;border-radius:2px;
+  font-family:var(--mono);font-size:11px;
+  z-index:1000;pointer-events:none;
+  transition:opacity .25s;
+}
+.toast.show{opacity:1}
+.toast.hide{opacity:0}
+.toast.success{background:rgba(0,200,83,0.15);border:1px solid rgba(0,200,83,0.35);color:var(--green)}
+.toast.error{background:rgba(232,22,42,0.15);border:1px solid rgba(232,22,42,0.35);color:var(--red)}
+.toast.info{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--text)}
+
+/* MODAL */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:500;backdrop-filter:blur(6px)}
+.modal.show{display:flex}
+.modal-box{background:var(--bg1);border:1px solid var(--border-r);padding:24px;width:340px;animation:fadeInUp .2s ease both}
+.modal-title{font-family:var(--hud);font-size:13px;color:var(--red);letter-spacing:3px;margin-bottom:16px}
+.country-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.country-btn{
+  padding:10px 6px;background:var(--bg2);border:1px solid var(--border);
+  color:var(--text);font-family:var(--hud);font-size:9px;letter-spacing:1px;
+  cursor:pointer;text-align:center;transition:all .15s;
+}
+.country-btn:hover{border-color:var(--red);color:white;background:rgba(232,22,42,0.1)}
+.modal-close{float:right;background:transparent;border:1px solid var(--border);color:var(--dim);padding:4px 10px;cursor:pointer;font-size:11px}
+.modal-close:hover{border-color:var(--red);color:var(--red)}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <div class="logo">
+    <span class="logo-main">ABSWAR</span>
+    <span class="logo-sub">Global War MMO</span>
+  </div>
+  <div class="nav-links">
+    <div class="nav-link">DASHBOARD</div>
+    <div class="nav-link active">MAP</div>
+    <div class="nav-link">COUNTRIES</div>
+    <div class="nav-link">ALLIANCES</div>
+    <div class="nav-link">STATS</div>
+    <div class="nav-link">MARKET</div>
+    <div class="nav-link">RANKING</div>
+  </div>
+  <div class="nav-right">
+    <span class="eth-bal" id="ethBal">0.000 ETH</span>
+    <button class="btn-wallet" id="walletBtn" onclick="connectWallet()">CONNECT WALLET</button>
+  </div>
+</nav>
+
+<!-- MAIN GRID -->
+<div style="height:calc(100vh - 44px - 28px);display:grid;grid-template-columns:170px 1fr 240px 240px;grid-template-rows:1fr 200px;gap:1px;background:rgba(255,255,255,0.04)">
+
+  <!-- LEFT SIDEBAR -->
+  <div style="grid-column:1;grid-row:1/3;background:var(--bg1);display:flex;flex-direction:column;overflow:hidden">
+    <div class="live-badge" style="display:flex;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border)">
+      <span class="live-dot"></span>
+      <span class="live-text">LIVE WAR</span>
+    </div>
+    <div style="padding:7px 12px;border-bottom:1px solid var(--border)">
+      <div class="sec-label">SEASON 1: FIRST COLLAPSE</div>
+    </div>
+    <div style="padding:8px 12px;border-bottom:1px solid var(--border)">
+      <div class="sec-label">TIME REMAINING</div>
+      <div class="timer-val" id="timerVal">23D 14H 42M 18S</div>
+    </div>
+
+    <div class="section-header">
+      WAR ACTIVITY
+    </div>
+    <div class="activity-list" id="activityList">
+      <div class="activity-item anim-new">
+        <div class="act-country"><span class="act-dot"></span>GERMANY</div>
+        <div class="act-detail">attacked by <span>FRANCE</span></div>
+        <div class="act-time">2m ago</div>
+      </div>
+      <div class="activity-item">
+        <div class="act-country"><span class="act-dot"></span>TURKEY</div>
+        <div class="act-detail">attacked by <span>GREECE</span></div>
+        <div class="act-time">3m ago</div>
+      </div>
+      <div class="activity-item">
+        <div class="act-country"><span class="act-dot"></span>USA</div>
+        <div class="act-detail">attacked by <span>CHINA</span></div>
+        <div class="act-time">5m ago</div>
+      </div>
+      <div class="activity-item">
+        <div class="act-country"><span class="act-dot"></span>RUSSIA</div>
+        <div class="act-detail">attacked by <span>UKRAINE</span></div>
+        <div class="act-time">8m ago</div>
+      </div>
+      <div class="activity-item">
+        <div class="act-country"><span class="act-dot"></span>JAPAN</div>
+        <div class="act-detail">attacked by <span>KOREA</span></div>
+        <div class="act-time">10m ago</div>
+      </div>
+    </div>
+    <button class="btn-view-all">VIEW ALL</button>
+  </div>
+
+  <!-- MAP -->
+  <div style="grid-column:2;grid-row:1/3;position:relative;background:#080c10;overflow:hidden">
+    <!-- Grid overlay -->
+    <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.07;pointer-events:none">
+      <defs><pattern id="g" width="36" height="36" patternUnits="userSpaceOnUse">
+        <path d="M36 0L0 0 0 36" fill="none" stroke="#00c853" stroke-width="0.4"/>
+      </pattern></defs>
+      <rect width="100%" height="100%" fill="url(#g)"/>
+    </svg>
+
+    <!-- Scan line -->
+    <div style="position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,200,83,0.3),transparent);animation:scanLine 4s linear infinite;pointer-events:none;z-index:2"></div>
+
+    <!-- World Map SVG -->
+    <svg id="worldMap" viewBox="0 0 900 500" preserveAspectRatio="xMidYMid meet"
+         style="position:absolute;inset:0;width:100%;height:100%">
+
+      <!-- Simplified continent shapes -->
+      <g opacity="0.25" fill="#1a2d1a" stroke="#00c853" stroke-width="0.8">
+        <!-- N America -->
+        <path d="M95,60 L185,45 L220,55 L240,80 L255,120 L250,170 L235,210 L215,240 L190,260 L170,270 L150,260 L130,230 L110,200 L90,160 L80,120 L85,85 Z"/>
+        <!-- S America -->
+        <path d="M185,275 L215,265 L240,280 L255,310 L260,355 L248,400 L230,430 L210,440 L192,430 L178,400 L170,360 L172,315 Z"/>
+        <!-- Europe -->
+        <path d="M368,55 L415,48 L445,58 L458,80 L455,108 L440,125 L415,130 L395,125 L375,110 L360,88 Z"/>
+        <!-- Africa -->
+        <path d="M370,140 L420,132 L452,145 L468,175 L472,220 L465,270 L450,315 L428,348 L405,360 L380,355 L358,330 L345,285 L342,235 L348,190 Z"/>
+        <!-- Asia -->
+        <path d="M462,38 L560,30 L660,35 L730,48 L775,65 L790,95 L785,130 L760,155 L720,170 L680,175 L640,168 L600,172 L565,185 L535,192 L505,188 L478,172 L458,148 L448,115 L450,78 Z"/>
+        <!-- Australia -->
+        <path d="M650,300 L705,292 L740,305 L758,335 L752,368 L728,388 L698,390 L668,375 L648,350 L642,320 Z"/>
+      </g>
+
+      <!-- Country nodes + labels -->
+      <g id="countryNodes">
+        <!-- USA -->
+        <g class="country-node" data-code="US" style="cursor:crosshair" onclick="selectTarget('US')">
+          <circle cx="148" cy="165" r="28" fill="rgba(232,22,42,0.08)" stroke="rgba(232,22,42,0.4)" stroke-width="1"/>
+          <circle cx="148" cy="165" r="5" fill="#e8162a" filter="url(#glow-red)"/>
+          <text x="148" y="148" text-anchor="middle" fill="#e8162a" font-family="'Orbitron'" font-size="9" font-weight="700">USA</text>
+          <text x="148" y="182" text-anchor="middle" fill="rgba(232,22,42,0.7)" font-family="'Share Tech Mono'" font-size="8">62.1K HP</text>
+        </g>
+        <!-- Canada -->
+        <g class="country-node" data-code="CA" style="cursor:crosshair" onclick="selectTarget('CA')">
+          <circle cx="148" cy="108" r="4" fill="#888" filter="url(#glow-dim)"/>
+          <text x="148" y="96" text-anchor="middle" fill="#999" font-family="'Orbitron'" font-size="8">CANADA</text>
+          <text x="148" y="120" text-anchor="middle" fill="#666" font-family="'Share Tech Mono'" font-size="7">65.3K HP</text>
+        </g>
+        <!-- Russia -->
+        <g class="country-node" data-code="RU" style="cursor:crosshair" onclick="selectTarget('RU')">
+          <circle cx="590" cy="95" r="30" fill="rgba(232,22,42,0.06)" stroke="rgba(232,22,42,0.3)" stroke-width="1"/>
+          <circle cx="590" cy="95" r="5" fill="#e8162a" filter="url(#glow-red)"/>
+          <text x="590" y="78" text-anchor="middle" fill="#e8162a" font-family="'Orbitron'" font-size="9" font-weight="700">RUSSIA</text>
+          <text x="590" y="112" text-anchor="middle" fill="rgba(232,22,42,0.7)" font-family="'Share Tech Mono'" font-size="8">91.2K HP</text>
+        </g>
+        <!-- China -->
+        <g class="country-node" data-code="CN" style="cursor:crosshair" onclick="selectTarget('CN')">
+          <circle cx="660" cy="165" r="26" fill="rgba(232,22,42,0.06)" stroke="rgba(232,22,42,0.3)" stroke-width="1"/>
+          <circle cx="660" cy="165" r="5" fill="#e8162a" filter="url(#glow-red)"/>
+          <text x="660" y="149" text-anchor="middle" fill="#e8162a" font-family="'Orbitron'" font-size="9" font-weight="700">CHINA</text>
+          <text x="660" y="182" text-anchor="middle" fill="rgba(232,22,42,0.7)" font-family="'Share Tech Mono'" font-size="8">88.7K HP</text>
+        </g>
+        <!-- Brazil -->
+        <g class="country-node" data-code="BR" style="cursor:crosshair" onclick="selectTarget('BR')">
+          <circle cx="222" cy="335" r="22" fill="rgba(232,22,42,0.06)" stroke="rgba(232,22,42,0.3)" stroke-width="1"/>
+          <circle cx="222" cy="335" r="4" fill="#e8162a" filter="url(#glow-red)"/>
+          <text x="222" y="320" text-anchor="middle" fill="#e8162a" font-family="'Orbitron'" font-size="8" font-weight="700">BRAZIL</text>
+          <text x="222" y="350" text-anchor="middle" fill="rgba(232,22,42,0.7)" font-family="'Share Tech Mono'" font-size="7">74.8K HP</text>
+        </g>
+        <!-- India -->
+        <g class="country-node" data-code="IN" style="cursor:crosshair" onclick="selectTarget('IN')">
+          <circle cx="570" cy="185" r="4" fill="#aaa" filter="url(#glow-dim)"/>
+          <text x="570" y="172" text-anchor="middle" fill="#aaa" font-family="'Orbitron'" font-size="8">INDIA</text>
+          <text x="570" y="200" text-anchor="middle" fill="#666" font-family="'Share Tech Mono'" font-size="7">54.2K HP</text>
+        </g>
+        <!-- Australia -->
+        <g class="country-node" data-code="AU" style="cursor:crosshair" onclick="selectTarget('AU')">
+          <circle cx="700" cy="350" r="4" fill="#888"/>
+          <text x="700" y="337" text-anchor="middle" fill="#999" font-family="'Orbitron'" font-size="8">AUSTRALIA</text>
+          <text x="700" y="364" text-anchor="middle" fill="#666" font-family="'Share Tech Mono'" font-size="7">49.3K HP</text>
+        </g>
+
+        <!-- Attack lines -->
+        <g opacity="0.6">
+          <line x1="415" y1="90" x2="148" y2="165" stroke="#e8162a" stroke-width="0.8" stroke-dasharray="4 4">
+            <animate attributeName="stroke-dashoffset" from="0" to="-100" dur="1.5s" repeatCount="indefinite"/>
+          </line>
+          <line x1="590" y1="95" x2="415" y2="90" stroke="#e8162a" stroke-width="0.8" stroke-dasharray="4 4">
+            <animate attributeName="stroke-dashoffset" from="0" to="-100" dur="2s" repeatCount="indefinite"/>
+          </line>
+          <line x1="660" y1="165" x2="570" y2="185" stroke="#e8162a" stroke-width="0.8" stroke-dasharray="3 3">
+            <animate attributeName="stroke-dashoffset" from="0" to="-80" dur="1.8s" repeatCount="indefinite"/>
+          </line>
+        </g>
+      </g>
+
+      <!-- My country (Turkey) - highlighted -->
+      <g id="myCountryNode">
+        <circle cx="450" cy="115" r="30" fill="rgba(0,200,83,0.08)" stroke="rgba(0,200,83,0.4)" stroke-width="1.5">
+          <animate attributeName="r" values="28;32;28" dur="2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="1;0.6;1" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="450" cy="115" r="6" fill="#00c853" filter="url(#glow-green)"/>
+        <text x="450" y="96" text-anchor="middle" fill="#00c853" font-family="'Orbitron'" font-size="9" font-weight="700">TURKEY</text>
+        <text x="450" y="133" text-anchor="middle" fill="rgba(0,200,83,0.8)" font-family="'Share Tech Mono'" font-size="8">78,500 HP</text>
+        <text x="450" y="145" text-anchor="middle" fill="rgba(0,200,83,0.5)" font-family="'Share Tech Mono'" font-size="7">◉ YOUR NATION</text>
+      </g>
+
+      <!-- Target lock indicator -->
+      <g id="targetLock" display="none">
+        <circle id="targetCircle" cx="0" cy="0" r="22" fill="none" stroke="#ff1a3c" stroke-width="1.5" stroke-dasharray="6 3">
+          <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <text id="targetLabel" x="0" y="-26" text-anchor="middle" fill="#ff1a3c" font-family="'Orbitron'" font-size="7" letter-spacing="2">TARGET LOCKED</text>
+      </g>
+
+      <!-- Defs -->
+      <defs>
+        <filter id="glow-red"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow-green"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow-dim"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+    </svg>
+
+    <!-- Map bottom bar -->
+    <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(8,12,16,0.9);border-top:1px solid var(--border);display:flex;align-items:center;gap:16px;padding:6px 12px;z-index:5">
+      <span style="font-family:var(--mono);font-size:9px;color:var(--dim)">MAP: 90%</span>
+      <span style="font-family:var(--mono);font-size:9px;color:var(--green)">● LIVE</span>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button onclick="attackTarget()" id="attackBtn"
+          style="padding:6px 16px;background:var(--red);color:white;font-family:var(--hud);font-size:9px;letter-spacing:2px;border:none;cursor:pointer;border-radius:1px;opacity:0.5" disabled>
+          ⚡ FIRE ATTACK
+        </button>
+        <button onclick="openCountryModal()"
+          style="padding:6px 12px;background:var(--bg2);color:var(--dim);font-family:var(--hud);font-size:9px;letter-spacing:1px;border:1px solid var(--border);cursor:pointer;border-radius:1px">
+          SELECT TARGET ▾
+        </button>
+      </div>
+    </div>
+
+    <!-- Radar level badge -->
+    <div style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.7);border:1px solid rgba(0,200,83,0.3);padding:6px 10px;z-index:5">
+      <div style="font-family:var(--hud);font-size:8px;color:var(--dim);letter-spacing:2px">RADAR LEVEL 3</div>
+      <button style="margin-top:4px;padding:4px 8px;background:var(--green);color:#000;font-family:var(--hud);font-size:8px;border:none;cursor:pointer;width:100%">UPGRADE</button>
+    </div>
+  </div>
+
+  <!-- COUNTRY OVERVIEW + BUY AMMO -->
+  <div style="grid-column:3;grid-row:1/3;background:var(--bg1);display:flex;flex-direction:column;overflow:hidden">
+    <div class="section-header">COUNTRY OVERVIEW</div>
+
+    <!-- Flag + name -->
+    <div class="co-header">
+      <div class="co-flag-name">
+        <span class="co-flag">🇹🇷</span>
+        <span class="co-name">TURKEY</span>
+      </div>
+      <div class="co-rank">
+        <span class="rank-label">RANK</span>
+        <span class="rank-num">#5</span>
+      </div>
+    </div>
+
+    <!-- HP -->
+    <div class="hp-section">
+      <div class="hp-numbers">
+        <span class="hp-current">78,500</span>
+        <span class="hp-max">/ 100,000</span>
+      </div>
+      <div class="hp-bar"><div class="hp-fill" id="myHpBar" style="width:78.5%"></div></div>
+      <div class="hp-pct">78.5%</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="co-stats">
+      <div class="co-stat">
+        <div class="co-stat-label">Total Attacks</div>
+        <div class="co-stat-val">1,246,789</div>
+      </div>
+      <div class="co-stat">
+        <div class="co-stat-label">Defenses</div>
+        <div class="co-stat-val">987,654</div>
+      </div>
+      <div class="co-stat">
+        <div class="co-stat-label">Contribution</div>
+        <div class="co-stat-val" id="myContrib">15,430</div>
+      </div>
+    </div>
+
+    <!-- Boosts -->
+    <div class="boosts-section">
+      <div class="sec-label">ACTIVE BOOSTS</div>
+      <div class="boosts-grid">
+        <div class="boost-card">
+          <span class="boost-icon">⚔️</span>
+          <div class="boost-type">ATTACK</div>
+          <div class="boost-val">+20%</div>
+          <div class="boost-timer">15m 32s</div>
+        </div>
+        <div class="boost-card">
+          <span class="boost-icon">🛡️</span>
+          <div class="boost-type">DEFENSE</div>
+          <div class="boost-val">+15%</div>
+          <div class="boost-timer">10m 11s</div>
+        </div>
+        <div class="boost-card">
+          <span class="boost-icon">📡</span>
+          <div class="boost-type">RADAR</div>
+          <div class="boost-val">+25%</div>
+          <div class="boost-timer">8m 45s</div>
+        </div>
+        <div class="boost-card">
+          <span class="boost-icon">🌿</span>
+          <div class="boost-type">RESOURCE</div>
+          <div class="boost-val">+10%</div>
+          <div class="boost-timer">20m 05s</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Buy Ammo -->
+    <div class="section-header">BUY AMMO</div>
+    <div class="ammo-section">
+      <div class="ammo-row">
+        <span class="ammo-icon">🔹</span>
+        <div class="ammo-info">
+          <div class="ammo-name">BASIC AMMO</div>
+          <div class="ammo-bullets">1,000 BULLETS</div>
+        </div>
+        <span class="ammo-price">0.01 ETH</span>
+        <button class="btn-buy" id="buyBtn1" onclick="buyAmmo(100)">BUY</button>
+      </div>
+      <div class="ammo-row">
+        <span class="ammo-icon">🔶</span>
+        <div class="ammo-info">
+          <div class="ammo-name">ADVANCED AMMO</div>
+          <div class="ammo-bullets">10,000 BULLETS</div>
+        </div>
+        <span class="ammo-price">0.08 ETH</span>
+        <button class="btn-buy" id="buyBtn2" onclick="buyAmmo(500)">BUY</button>
+      </div>
+      <div class="ammo-row">
+        <span class="ammo-icon">🔴</span>
+        <div class="ammo-info">
+          <div class="ammo-name">PREMIUM AMMO</div>
+          <div class="ammo-bullets">100,000 BULLETS</div>
+        </div>
+        <span class="ammo-price">0.75 ETH</span>
+        <button class="btn-buy" id="buyBtn3" onclick="buyAmmo(2000)">BUY</button>
+      </div>
+      <div class="ammo-row">
+        <span class="ammo-icon">💎</span>
+        <div class="ammo-info">
+          <div class="ammo-name">LEGENDARY AMMO</div>
+          <div class="ammo-bullets">1,000,000 BULLETS</div>
+        </div>
+        <span class="ammo-price">5.00 ETH</span>
+        <button class="btn-buy" id="buyBtn4" onclick="buyAmmo(9999)">BUY</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD + YOUR STATS -->
+  <div style="grid-column:4;grid-row:1/3;background:var(--bg1);display:flex;flex-direction:column;overflow:hidden">
+    <div class="section-header">LEADERBOARD</div>
+    <div class="lb-tabs">
+      <div class="lb-tab active" onclick="setLbTab('countries',this)">COUNTRIES</div>
+      <div class="lb-tab" onclick="setLbTab('players',this)">PLAYERS</div>
+    </div>
+    <div class="lb-list" id="lbList">
+      <div class="lb-row"><span class="lb-num">1</span><span class="lb-flag">🇷🇺</span><span class="lb-name">RUSSIA</span><span class="lb-hp">91.2K HP</span></div>
+      <div class="lb-row"><span class="lb-num">2</span><span class="lb-flag">🇨🇳</span><span class="lb-name">CHINA</span><span class="lb-hp">88.7K HP</span></div>
+      <div class="lb-row"><span class="lb-num">3</span><span class="lb-flag">🇩🇪</span><span class="lb-name">GERMANY</span><span class="lb-hp">83.1K HP</span></div>
+      <div class="lb-row"><span class="lb-num">4</span><span class="lb-flag">🇧🇷</span><span class="lb-name">BRAZIL</span><span class="lb-hp">79.9K HP</span></div>
+      <div class="lb-row me"><span class="lb-num">5</span><span class="lb-flag">🇹🇷</span><span class="lb-name">TURKEY</span><span class="lb-hp">78.5K HP</span></div>
+      <div class="lb-row"><span class="lb-num">6</span><span class="lb-flag">🇮🇳</span><span class="lb-name">INDIA</span><span class="lb-hp">64.2K HP</span></div>
+      <div class="lb-row"><span class="lb-num">7</span><span class="lb-flag">🇺🇸</span><span class="lb-name">USA</span><span class="lb-hp">62.1K HP</span></div>
+      <div class="lb-row"><span class="lb-num">8</span><span class="lb-flag">🇫🇷</span><span class="lb-name">FRANCE</span><span class="lb-hp">58.7K HP</span></div>
+      <div class="lb-row"><span class="lb-num">9</span><span class="lb-flag">🇯🇵</span><span class="lb-name">JAPAN</span><span class="lb-hp">53.6K HP</span></div>
+      <div class="lb-row"><span class="lb-num">10</span><span class="lb-flag">🇬🇧</span><span class="lb-name">UK</span><span class="lb-hp">50.4K HP</span></div>
+    </div>
+    <button class="lb-view-all">VIEW FULL RANKING</button>
+
+    <div class="section-header">YOUR STATS</div>
+    <div class="your-stats">
+      <div class="ys-row"><span class="ys-label">KILLS</span><span class="ys-val red" id="ysKills">2,451</span></div>
+      <div class="ys-row"><span class="ys-label">DEATHS</span><span class="ys-val" id="ysDeaths">612</span></div>
+      <div class="ys-row"><span class="ys-label">CONTRIBUTION SCORE</span><span class="ys-val green" id="ysScore">15,430</span></div>
+      <div class="ys-row"><span class="ys-label">RANK</span><span class="ys-val">Commander</span></div>
+      <div class="ys-row"><span class="ys-label">COUNTRY</span><span class="ys-val">🇹🇷 TURKEY</span></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM ROW -->
+  <!-- Attack History -->
+  <div style="grid-column:1;grid-row:2;background:var(--bg1);display:flex;flex-direction:column;overflow:hidden">
+    <div class="section-header">ATTACK HISTORY</div>
+    <div class="ah-head"><span>TARGET</span><span>DAMAGE</span><span>TIME</span></div>
+    <div style="flex:1;overflow-y:auto" id="attackHistory">
+      <div class="ah-row anim-new"><div class="ah-target"><span>🇬🇷</span> GREECE</div><div class="ah-dmg">-2,350 HP</div><div class="ah-time">2m ago</div></div>
+      <div class="ah-row"><div class="ah-target"><span>🇧🇬</span> BULGARIA</div><div class="ah-dmg">-1,650 HP</div><div class="ah-time">5m ago</div></div>
+      <div class="ah-row"><div class="ah-target"><span>🇦🇲</span> ARMENIA</div><div class="ah-dmg">-3,200 HP</div><div class="ah-time">10m ago</div></div>
+      <div class="ah-row"><div class="ah-target"><span>🇨🇾</span> CYPRUS</div><div class="ah-dmg">-550 HP</div><div class="ah-time">15m ago</div></div>
+      <div class="ah-row"><div class="ah-target"><span>🇸🇾</span> SYRIA</div><div class="ah-dmg">-2,100 HP</div><div class="ah-time">20m ago</div></div>
+    </div>
+    <button class="lb-view-all">VIEW FULL HISTORY</button>
+  </div>
+
+  <!-- Alliance Chat -->
+  <div style="grid-column:2;grid-row:2;background:var(--bg1);display:flex;flex-direction:column;overflow:hidden">
+    <div class="section-header">
+      ALLIANCE CHAT
+      <span style="font-family:var(--mono);font-size:9px;color:var(--green)">🇹🇷 TURKISH ALLIANCE &nbsp; 256 Online</span>
+    </div>
+    <div class="chat-body" id="chatBody">
+      <div class="chat-msg">
+        <div class="chat-sender"><span class="chat-flag">🇹🇷</span><span class="chat-name">CommanderTR</span><span class="chat-time">2m ago</span></div>
+        <div class="chat-text">Everyone focus on Greece!</div>
+      </div>
+      <div class="chat-msg">
+        <div class="chat-sender"><span class="chat-flag">🇹🇷</span><span class="chat-name">General34</span><span class="chat-time">2m ago</span></div>
+        <div class="chat-text">We need more support on west!</div>
+      </div>
+      <div class="chat-msg">
+        <div class="chat-sender"><span class="chat-flag">🇹🇷</span><span class="chat-name">WarLord</span><span class="chat-time">4m ago</span></div>
+        <div class="chat-text">I'm sending advanced ammo.</div>
+      </div>
+      <div class="chat-msg">
+        <div class="chat-sender"><span class="chat-flag">🇹🇷</span><span class="chat-name">CommanderTR</span><span class="chat-time">5m ago</span></div>
+        <div class="chat-text">Good job team!</div>
+      </div>
+    </div>
+    <div class="chat-input-row">
+      <input class="chat-input" id="chatInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="chat-send" onclick="sendChat()">➤</button>
+    </div>
+  </div>
+
+  <!-- Radar System -->
+  <div style="grid-column:3;grid-row:2;background:var(--bg1);display:flex;flex-direction:column;overflow:hidden">
+    <div class="section-header">RADAR SYSTEM</div>
+    <div class="radar-wrap">
+      <!-- Radar SVG -->
+      <div class="radar-canvas">
+        <svg class="radar-svg" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="58" fill="#020e06" stroke="rgba(0,200,83,0.3)" stroke-width="1"/>
+          <circle cx="60" cy="60" r="40" fill="none" stroke="rgba(0,200,83,0.15)" stroke-width="0.5"/>
+          <circle cx="60" cy="60" r="22" fill="none" stroke="rgba(0,200,83,0.15)" stroke-width="0.5"/>
+          <line x1="60" y1="2" x2="60" y2="118" stroke="rgba(0,200,83,0.1)" stroke-width="0.5"/>
+          <line x1="2" y1="60" x2="118" y2="60" stroke="rgba(0,200,83,0.1)" stroke-width="0.5"/>
+          <!-- Sweep -->
+          <g style="transform-origin:60px 60px;animation:radarSweep 3s linear infinite">
+            <path d="M60,60 L60,2 A58,58 0 0,1 116,78 Z" fill="rgba(0,200,83,0.12)"/>
+          </g>
+          <!-- Blips -->
+          <circle cx="38" cy="35" r="2.5" fill="#e8162a" opacity="0.9"><animate attributeName="opacity" values="1;0.2;1" dur="1.2s" repeatCount="indefinite"/></circle>
+          <circle cx="85" cy="72" r="2" fill="#f5c842" opacity="0.8"><animate attributeName="opacity" values="1;0.3;1" dur="1.8s" repeatCount="indefinite"/></circle>
+          <circle cx="45" cy="80" r="2" fill="#00c853" opacity="0.7"><animate attributeName="opacity" values="1;0.4;1" dur="2.1s" repeatCount="indefinite"/></circle>
+          <circle cx="90" cy="40" r="2.5" fill="#ff6b35" opacity="0.9"><animate attributeName="opacity" values="1;0.2;1" dur="1.5s" repeatCount="indefinite"/></circle>
+          <!-- Center -->
+          <circle cx="60" cy="60" r="3" fill="#00c853"/>
+        </svg>
+      </div>
+      <!-- Detected -->
+      <div class="radar-detected">
+        <div class="sec-label">DETECTED ACTIVITY</div>
+        <div class="det-row"><span class="det-flag">🇬🇷</span><div><div class="det-country">GREECE</div><div class="det-activity massive">Massive Attack</div></div><span class="det-time">2m ago</span></div>
+        <div class="det-row"><span class="det-flag">🇧🇬</span><div><div class="det-country">BULGARIA</div><div class="det-activity movement">Troop Movement</div></div><span class="det-time">5m ago</span></div>
+        <div class="det-row"><span class="det-flag">🇺🇸</span><div><div class="det-country">USA</div><div class="det-activity alliance-m">Alliance Movement</div></div><span class="det-time">7m ago</span></div>
+        <div class="det-row"><span class="det-flag">🇷🇺</span><div><div class="det-country">RUSSIA</div><div class="det-activity nuclear">Nuclear Ready</div></div><span class="det-time">10m ago</span></div>
+        <button class="lb-view-all" style="margin-top:8px">SCAN UPGRADES</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resource Control -->
+  <div style="grid-column:4;grid-row:2;background:var(--bg1);display:flex;flex-direction:column;overflow:hidden">
+    <div class="section-header">
+      RESOURCE CONTROL
+      <button class="lb-view-all" style="margin:0;width:auto;padding:2px 8px;font-size:7px">VIEW ALL</button>
+    </div>
+    <div class="res-body">
+      <div class="res-row">
+        <div class="res-header">
+          <span class="res-name"><span class="res-icon">🛢️</span>OIL</span>
+          <span class="res-pct">72.5%</span>
+        </div>
+        <div class="res-bar"><div class="res-fill" style="width:72.5%;background:linear-gradient(90deg,#e8162a,#ff4500)"></div></div>
+        <div class="res-change pos">+126%</div>
+      </div>
+      <div class="res-row">
+        <div class="res-header">
+          <span class="res-name"><span class="res-icon">💧</span>GAS</span>
+          <span class="res-pct">64.3%</span>
+        </div>
+        <div class="res-bar"><div class="res-fill" style="width:64.3%;background:linear-gradient(90deg,#e87016,#ffaa00)"></div></div>
+        <div class="res-change pos">+56%</div>
+      </div>
+      <div class="res-row">
+        <div class="res-header">
+          <span class="res-name"><span class="res-icon">⚙️</span>METAL</span>
+          <span class="res-pct">81.7%</span>
+        </div>
+        <div class="res-bar"><div class="res-fill" style="width:81.7%;background:linear-gradient(90deg,#888,#ccc)"></div></div>
+        <div class="res-change pos">+150%</div>
+      </div>
+      <div class="res-row">
+        <div class="res-header">
+          <span class="res-name"><span class="res-icon">💻</span>TECH</span>
+          <span class="res-pct">55.2%</span>
+        </div>
+        <div class="res-bar"><div class="res-fill" style="width:55.2%;background:linear-gradient(90deg,#0066ff,#00aaff)"></div></div>
+        <div class="res-change pos">+70%</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end main grid -->
+
+<!-- TICKER BAR -->
+<div class="ticker-bar">
+  <div class="ticker-label ticker-red">🔴 GLOBAL NEWS</div>
+  <div class="ticker-scroll">
+    <div class="ticker-inner" id="tickerInner">
+      <span class="ticker-item"><span>🔥</span> Turkey launched a massive offensive against Greece!</span>
+      <span class="ticker-item"><span>⚔️</span> USA alliance under attack from China!</span>
+      <span class="ticker-item"><span>📡</span> Russia nuclear activity detected near border!</span>
+      <span class="ticker-item"><span>🛰️</span> Brazil sector conflict rising — 74.8K HP remaining</span>
+      <span class="ticker-item"><span>⚠️</span> Germany defenses collapsing on northern border!</span>
+      <span class="ticker-item"><span>🤝</span> China and Russia signed a new alliance treaty!</span>
+      <span class="ticker-item"><span>🔥</span> Turkey launched a massive offensive against Greece!</span>
+      <span class="ticker-item"><span>⚔️</span> USA alliance under attack from China!</span>
+      <span class="ticker-item"><span>📡</span> Russia nuclear activity detected near border!</span>
+      <span class="ticker-item"><span>🛰️</span> Brazil sector conflict rising — 74.8K HP remaining</span>
+    </div>
+  </div>
+  <div class="ticker-label ticker-warn" style="border-left:1px solid var(--border);border-right:none">
+    ⚠️ WAR ALERT &nbsp; <span style="color:var(--text)">USA alliance under attack!</span>
+  </div>
+  <div style="padding:0 12px;font-family:var(--mono);font-size:9px;color:var(--green)">
+    ONLINE: <span id="onlineCount">12,458</span>
+  </div>
+  <button class="btn-join" onclick="connectWallet()">JOIN THE WAR</button>
+</div>
+
+<!-- COUNTRY MODAL -->
+<div class="modal" id="countryModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕ CLOSE</button>
+    <div class="modal-title">SELECT TARGET NATION</div>
+    <div class="country-grid">
+      <button class="country-btn" onclick="selectTarget('US');closeModal()">🇺🇸 USA</button>
+      <button class="country-btn" onclick="selectTarget('RU');closeModal()">🇷🇺 Russia</button>
+      <button class="country-btn" onclick="selectTarget('CN');closeModal()">🇨🇳 China</button>
+      <button class="country-btn" onclick="selectTarget('DE');closeModal()">🇩🇪 Germany</button>
+      <button class="country-btn" onclick="selectTarget('FR');closeModal()">🇫🇷 France</button>
+      <button class="country-btn" onclick="selectTarget('GB');closeModal()">🇬🇧 UK</button>
+      <button class="country-btn" onclick="selectTarget('JP');closeModal()">🇯🇵 Japan</button>
+      <button class="country-btn" onclick="selectTarget('BR');closeModal()">🇧🇷 Brazil</button>
+      <button class="country-btn" onclick="selectTarget('IN');closeModal()">🇮🇳 India</button>
+      <button class="country-btn" onclick="selectTarget('KR');closeModal()">🇰🇷 S.Korea</button>
+      <button class="country-btn" onclick="selectTarget('UA');closeModal()">🇺🇦 Ukraine</button>
+      <button class="country-btn" onclick="selectTarget('GR');closeModal()">🇬🇷 Greece</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<style>
+@keyframes scanLine{0%{top:-1px}100%{top:100%}}
+</style>
+
+<script>
+const API = 'https://abswar-clean-backend-production.up.railway.app';
+let wallet = null, myCountry = 'TR', targetCountry = null, cooldown = 0, cooldownTimer = null;
+
+/* ── WALLET ── */
+async function connectWallet() {
+  if (!window.ethereum) { showToast('MetaMask bulunamadı!', 'error'); return; }
+  try {
+    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+    wallet = accounts[0];
+    const btn = document.getElementById('walletBtn');
+    btn.textContent = wallet.slice(0,6)+'...'+wallet.slice(-4);
+    btn.className = 'btn-wallet connected';
+    showToast('Bağlandı: ' + wallet.slice(0,6)+'...', 'success');
+    try {
+      const res = await fetch(API+'/api/player/connect', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({wallet})
+      });
+      const data = await res.json();
+      if (data.player?.contribution) {
+        document.getElementById('myContrib').textContent = data.player.contribution.toLocaleString();
+        document.getElementById('ysScore').textContent = data.player.contribution.toLocaleString();
+      }
+    } catch(e){}
+  } catch(e){ showToast('Bağlantı iptal edildi.', 'error'); }
+}
+
+/* ── TARGET ── */
+const TARGET_POS = {US:{cx:148,cy:165},RU:{cx:590,cy:95},CN:{cx:660,cy:165},BR:{cx:222,cy:335},IN:{cx:570,cy:185}};
+function selectTarget(code) {
+  if (code === myCountry) { showToast('Kendi ülkene saldıramazsın!','error'); return; }
+  targetCountry = code;
+  const lock = document.getElementById('targetLock');
+  const circle = document.getElementById('targetCircle');
+  const label = document.getElementById('targetLabel');
+  const pos = TARGET_POS[code];
+  if (pos) {
+    lock.setAttribute('display','block');
+    lock.setAttribute('transform',`translate(${pos.cx},${pos.cy})`);
+  }
+  const btn = document.getElementById('attackBtn');
+  btn.disabled = false;
+  btn.style.opacity = '1';
+  btn.textContent = `⚡ ATTACK ${code}`;
+  showToast(`Target locked: ${code}`, 'info');
+}
+
+/* ── ATTACK ── */
+async function attackTarget() {
+  if (!wallet) { showToast('Önce wallet bağla!','error'); return; }
+  if (!targetCountry) { showToast('Hedef seçilmedi!','error'); return; }
+  if (cooldown > 0) { showToast(`Cooldown: ${cooldown}s`, 'error'); return; }
+
+  document.getElementById('attackBtn').disabled = true;
+  document.getElementById('attackBtn').textContent = 'FIRING...';
+
+  try {
+    const res = await fetch(API+'/api/game/attack', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({wallet, targetCountry})
+    });
+    const data = await res.json();
+    if (data.error) { showToast(data.error,'error'); }
+    else {
+      showToast(`⚡ ${targetCountry} hit! -1 HP`, 'success');
+      addAttackHistory(targetCountry);
+      startCooldown(10);
+    }
+  } catch(e){ showToast('Saldırı başarısız.','error'); }
+  finally {
+    document.getElementById('attackBtn').textContent = `⚡ ATTACK ${targetCountry}`;
+  }
+}
+
+function addAttackHistory(code) {
+  const flags = {US:'🇺🇸',RU:'🇷🇺',CN:'🇨🇳',BR:'🇧🇷',IN:'🇮🇳',DE:'🇩🇪',FR:'🇫🇷',GB:'🇬🇧',JP:'🇯🇵',KR:'🇰🇷',UA:'🇺🇦',GR:'🇬🇷'};
+  const f = flags[code] || '🏳️';
+  const row = document.createElement('div');
+  row.className = 'ah-row anim-new';
+  row.innerHTML = `<div class="ah-target"><span>${f}</span> ${code}</div><div class="ah-dmg">-1 HP</div><div class="ah-time">just now</div>`;
+  const hist = document.getElementById('attackHistory');
+  hist.insertBefore(row, hist.firstChild);
+}
+
+function startCooldown(secs) {
+  cooldown = secs;
+  clearInterval(cooldownTimer);
+  const btn = document.getElementById('attackBtn');
+  btn.disabled = true;
+  cooldownTimer = setInterval(() => {
+    cooldown--;
+    btn.textContent = `COOLDOWN ${cooldown}s`;
+    if (cooldown <= 0) {
+      clearInterval(cooldownTimer);
+      btn.disabled = false;
+      btn.textContent = `⚡ ATTACK ${targetCountry}`;
+    }
+  }, 1000);
+}
+
+/* ── BUY AMMO ── */
+async function buyAmmo(pack) {
+  if (!wallet) { showToast('Önce wallet bağla!','error'); return; }
+  try {
+    const res = await fetch(API+'/api/market/buy-demo', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({wallet, pack})
+    });
+    const data = await res.json();
+    if (data.error) showToast(data.error, 'error');
+    else showToast(`${pack} ammo satın alındı!`, 'success');
+  } catch(e){ showToast('Satın alma başarısız.','error'); }
+}
+
+/* ── CHAT ── */
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  const row = document.createElement('div');
+  row.className = 'chat-msg anim-new';
+  row.innerHTML = `<div class="chat-sender"><span class="chat-flag">🇹🇷</span><span class="chat-name">YOU</span><span class="chat-time">just now</span></div><div class="chat-text">${msg}</div>`;
+  const body = document.getElementById('chatBody');
+  body.insertBefore(row, body.firstChild);
+  input.value = '';
+  if (wallet) {
+    fetch(API+'/api/alliance/radio', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({wallet, command: msg})
+    }).catch(()=>{});
+  }
+}
+
+/* ── LEADERBOARD TAB ── */
+function setLbTab(tab, el) {
+  document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+/* ── MODALS ── */
+function openCountryModal(){ document.getElementById('countryModal').classList.add('show'); }
+function closeModal(){ document.getElementById('countryModal').classList.remove('show'); }
+document.getElementById('countryModal').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+
+/* ── TOAST ── */
+let toastTimer;
+function showToast(msg, type='info') {
+  clearTimeout(toastTimer);
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast show ${type}`;
+  toastTimer = setTimeout(()=>{ t.classList.remove('show'); }, 2800);
+}
+
+/* ── TIMER ── */
+let secs = 23*86400 + 14*3600 + 42*60 + 18;
+setInterval(()=>{
+  if(secs>0) secs--;
+  const d=Math.floor(secs/86400), h=Math.floor((secs%86400)/3600), m=Math.floor((secs%3600)/60), s=secs%60;
+  document.getElementById('timerVal').textContent = `${d}D ${String(h).padStart(2,'0')}H ${String(m).padStart(2,'0')}M ${String(s).padStart(2,'0')}S`;
+}, 1000);
+
+/* ── GAME STATE POLL ── */
+async function pollState() {
+  try {
+    const res = await fetch(API+'/api/game/state');
+    const data = await res.json();
+    if (data?.countries) updateLeaderboard(data.countries);
+    if (data?.onlinePlayers) document.getElementById('onlineCount').textContent = data.onlinePlayers.toLocaleString();
+  } catch(e){}
+}
+function updateLeaderboard(countries) {
+  const sorted = [...countries].filter(c=>c.is_alive!==false).sort((a,b)=>(b.hp||0)-(a.hp||0));
+  const list = document.getElementById('lbList');
+  list.innerHTML = '';
+  sorted.slice(0,10).forEach((c,i)=>{
+    const flags={TR:'🇹🇷',US:'🇺🇸',RU:'🇷🇺',CN:'🇨🇳',DE:'🇩🇪',FR:'🇫🇷',GB:'🇬🇧',JP:'🇯🇵',BR:'🇧🇷',IN:'🇮🇳',KR:'🇰🇷',UA:'🇺🇦'};
+    const row = document.createElement('div');
+    row.className = 'lb-row' + (c.code===myCountry?' me':'');
+    row.innerHTML = `<span class="lb-num">${i+1}</span><span class="lb-flag">${flags[c.code]||'🏳️'}</span><span class="lb-name">${c.code}</span><span class="lb-hp">${((c.hp||0)/1000).toFixed(1)}K HP</span>`;
+    list.appendChild(row);
+  });
+}
+pollState();
+setInterval(pollState, 15000);
+
+/* ── SOCKET (if available) ── */
+const script = document.createElement('script');
+script.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
+script.onload = () => {
+  const socket = io(API, {transports:['websocket']});
+  socket.on('war:attack', (d) => {
+    const item = document.createElement('div');
+    item.className = 'activity-item anim-new';
+    item.innerHTML = `<div class="act-country"><span class="act-dot"></span>${d.targetCountry||d.to}</div><div class="act-detail">attacked by <span>${d.attackerCountry||d.from}</span></div><div class="act-time">just now</div>`;
+    const list = document.getElementById('activityList');
+    list.insertBefore(item, list.firstChild);
+    if (list.children.length > 10) list.removeChild(list.lastChild);
+  });
+  socket.on('players:online', (n) => { document.getElementById('onlineCount').textContent = Number(n).toLocaleString(); });
+  socket.on('war:state', (d) => { if(d?.countries) updateLeaderboard(d.countries); });
+};
+document.head.appendChild(script);
+</script>
+</body>
+</html>
